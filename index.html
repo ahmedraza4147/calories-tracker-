@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<title>Daily Calorie Tracker</title>
+<style>
+  :root{
+    --bg:#0a0e13;
+    --card:#111823;
+    --card2:#0d131b;
+    --border:#1e2a38;
+    --text:#e8eef6;
+    --muted:#8496a8;
+    --accent:#22c55e;
+    --danger:#ef4444;
+    --warn:#f59e0b;
+    --blue:#38bdf8;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1100px 620px at 50% -15%, #172433 0%, #0a0e13 55%) fixed;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    padding:26px 16px 70px;
+    min-height:100vh;
+  }
+  .app{max-width:1040px;margin:0 auto;}
+
+  /* Loading overlay */
+  #loadingOverlay{
+    position:fixed; inset:0; background:rgba(10,14,19,.95);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    z-index:999; gap:16px;
+  }
+  #loadingOverlay.hidden{ display:none; }
+  .spinner{
+    width:44px; height:44px; border:4px solid #1e2a38; border-top-color:#22c55e;
+    border-radius:50%; animation:spin 1s linear infinite;
+  }
+  @keyframes spin{ to { transform:rotate(360deg); } }
+  .loading-text{ color:var(--muted); font-size:.9rem; }
+
+  /* Status bar */
+  .status-bar{
+    text-align:center; font-size:.72rem; color:var(--muted); margin-bottom:14px;
+    padding:6px; border-radius:8px; background:#0a1017; border:1px solid var(--border);
+    transition:all .3s;
+  }
+  .status-bar.syncing{ color:var(--warn); border-color:#4d3612; background:#1a1408; }
+  .status-bar.online{ color:var(--accent); border-color:#1c4029; background:#0f2418; }
+  .status-bar.offline{ color:var(--danger); border-color:#4d1c1f; background:#1a0809; }
+
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .logo{
+    width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+    background:linear-gradient(145deg,#22c55e,#0ea5e9);font-size:22px;
+    box-shadow:0 6px 20px -6px #22c55e88;
+  }
+  h1{font-size:1.3rem;margin:0;letter-spacing:-.02em;}
+  .brand p{margin:2px 0 0;font-size:.78rem;color:var(--muted);}
+  .today-chip{
+    background:var(--card);border:1px solid var(--border);border-radius:999px;
+    padding:8px 16px;font-size:.82rem;color:var(--muted);
+  }
+  .today-chip b{color:var(--text);font-weight:600;}
+
+  .grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr) 350px;}
+  @media (max-width:880px){ .grid{grid-template-columns:1fr;} }
+
+  .card{
+    background:linear-gradient(180deg,var(--card) 0%,var(--card2) 100%);
+    border:1px solid var(--border);border-radius:var(--radius);padding:20px;
+  }
+  .card + .card{margin-top:16px;}
+  .card h2{
+    margin:0 0 14px;font-size:.82rem;font-weight:600;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--muted);
+  }
+
+  .date-nav{display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .date-nav input[type="text"]{
+    flex:1;min-width:150px;background:#0a1017;border:1px solid var(--border);
+    color:var(--text);border-radius:10px;padding:9px 12px;font-size:.85rem;
+    font-family:inherit;outline:none;
+  }
+ .date-nav input[type="text"]:focus{border-color:#2d4257;}
+  .icon-btn{
+    width:38px;height:38px;flex:0 0 auto;border-radius:10px;cursor:pointer;
+    background:#0a1017;border:1px solid var(--border);color:var(--text);
+    font-size:1rem;display:grid;place-items:center;transition:.15s;
+  }
+  .icon-btn:hover:not(:disabled){background:#16202c;border-color:#2d4257;}
+  .icon-btn:disabled{opacity:.35;cursor:not-allowed;}
+  .ghost-btn{
+    background:#0a1017;border:1px solid var(--border);color:var(--muted);
+    border-radius:10px;padding:9px 14px;font-size:.8rem;cursor:pointer;
+    font-family:inherit;transition:.15s;white-space:nowrap;
+  }
+  .ghost-btn:hover{color:var(--text);border-color:#2d4257;}
+
+  .ring-wrap{position:relative;width:210px;height:210px;margin:4px auto 18px;}
+  .ring{width:100%;height:100%;transform:rotate(-90deg);}
+  .ring circle{fill:none;stroke-width:13;stroke-linecap:round;}
+  .ring-bg{stroke:#1b2735;}
+  .ring-fg{
+    stroke:var(--accent);stroke-dasharray:502.65;stroke-dashoffset:502.65;
+    transition:stroke-dashoffset .55s cubic-bezier(.4,0,.2,1), stroke .3s;
+  }
+  .ring-center{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:3px;text-align:center;
+  }
+  .ring-big{font-size:2.5rem;font-weight:700;letter-spacing:-.03em;line-height:1;}
+  .ring-sub{font-size:.76rem;color:var(--muted);}
+  .ring-pill{
+    margin-top:5px;font-size:.72rem;font-weight:600;padding:4px 11px;border-radius:999px;
+    background:#0f2418;color:var(--accent);border:1px solid #1c4029;
+  }
+  .ring-pill.over{background:#2a1113;color:var(--danger);border-color:#4d1c1f;}
+  .ring-pill.warn{background:#2a1f0a;color:var(--warn);border-color:#4d3612;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+  @media (max-width:520px){ .stats{grid-template-columns:repeat(2,1fr);} }
+  .stat{background:#0a1017;border:1px solid var(--border);border-radius:12px;padding:11px 12px;}
+  .stat .label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+  .stat .value{font-size:1.15rem;font-weight:700;margin-top:4px;letter-spacing:-.02em;}
+  .stat .value small{font-size:.7rem;font-weight:500;color:var(--muted);margin-left:2px;}
+  .v-good{color:var(--accent);} .v-bad{color:var(--danger);} .v-warn{color:var(--warn);} .v-blue{color:var(--blue);}
+
+  .add-form{display:grid;grid-template-columns:1fr 110px auto;gap:8px;margin-bottom:16px;}
+  @media (max-width:520px){ .add-form{grid-template-columns:1fr 90px;} .add-form button{grid-column:1/-1;} }
+  .add-form input{
+    background:#0a1017;border:1px solid var(--border);color:var(--text);
+    border-radius:10px;padding:11px 13px;font-size:.88rem;font-family:inherit;
+    outline:none;transition:.15s;width:100%;
+  }
+  .add-form input:focus{border-color:#2d4257;background:#0c141d;}
+  .add-form input::placeholder{color:#5a6b7d;}
+  .add-form input:disabled{opacity:.4;cursor:not-allowed;}
+  .add-form button{
+    background:linear-gradient(145deg,#22c55e,#16a34a);border:none;color:#04140a;
+    font-weight:700;font-size:.85rem;border-radius:10px;padding:11px 20px;cursor:pointer;
+    font-family:inherit;transition:.15s;white-space:nowrap;
+  }
+  .add-form button:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);}
+  .add-form button:active:not(:disabled){transform:translateY(0);}
+  .add-form button:disabled{background:#1e2a38;color:#5a6b7d;cursor:not-allowed;opacity:.6;}
+
+  .future-banner{
+    display:none;background:#2a1f0a;border:1px solid #4d3612;color:var(--warn);
+    border-radius:10px;padding:10px 14px;font-size:.78rem;margin-bottom:14px;
+    text-align:center;font-weight:600;
+  }
+  .future-banner.show{display:block;}
+
+  .list-head{
+    display:flex;align-items:center;justify-content:space-between;
+    font-size:.75rem;color:var(--muted);margin-bottom:8px;
+    padding-bottom:8px;border-bottom:1px solid var(--border);
+  }
+  .food-list{list-style:none;margin:0;padding:0;max-height:300px;overflow-y:auto;}
+  .food-list::-webkit-scrollbar{width:8px;}
+  .food-list::-webkit-scrollbar-thumb{background:#1e2a38;border-radius:8px;}
+  .food-item{
+    display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;
+    background:#0a1017;border:1px solid transparent;margin-bottom:6px;transition:.15s;
+  }
+  .food-item:hover{border-color:var(--border);}
+  .food-name{flex:1;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .food-kcal{font-size:.88rem;font-weight:700;color:var(--blue);white-space:nowrap;}
+  .del-btn{
+    width:26px;height:26px;flex:0 0 auto;border-radius:8px;border:none;cursor:pointer;
+    background:transparent;color:#4d5d6e;font-size:1.1rem;line-height:1;
+    display:grid;place-items:center;transition:.15s;font-family:inherit;
+  }
+  .del-btn:hover{background:#2a1113;color:var(--danger);}
+  .empty{text-align:center;color:#4d5d6e;font-size:.83rem;padding:22px 0;}
+
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:.74rem;color:var(--muted);margin-bottom:6px;letter-spacing:.03em;}
+  .field input,.field select{
+    width:100%;background:#0a1017;border:1px solid var(--border);color:var(--text);
+    border-radius:10px;padding:11px 13px;font-size:.92rem;font-family:inherit;
+    outline:none;transition:.15s;font-weight:600;
+  }
+  .field input:focus,.field select:focus{border-color:#2d4257;}
+  .field select{cursor:pointer;appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238496a8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;background-size:16px;
+    padding-right:36px;
+  }
+  .field input:disabled,.field select:disabled{opacity:.55;cursor:not-allowed;background:#070b10;}
+
+  .target-box{
+    background:linear-gradient(145deg,#0f2418,#0a1017);
+    border:1px solid #1c4029;border-radius:12px;padding:15px;text-align:center;margin-top:4px;
+  }
+  .target-box .tb-label{font-size:.7rem;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;}
+  .target-box .tb-value{font-size:1.9rem;font-weight:700;letter-spacing:-.03em;margin-top:3px;}
+  .target-box .tb-value small{font-size:.75rem;color:var(--muted);font-weight:500;}
+  .hint{font-size:.72rem;color:#5a6b7d;margin:10px 0 0;line-height:1.5;}
+
+  .hist-row{margin-bottom:12px;}
+  .hist-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.78rem;margin-bottom:5px;}
+  .hist-date{color:var(--muted);}
+  .hist-kcal{font-weight:700;font-size:.82rem;}
+  .hist-bar{height:7px;background:#0a1017;border-radius:99px;overflow:hidden;border:1px solid var(--border);}
+  .hist-fill{height:100%;border-radius:99px;transition:width .5s ease;}
+  .hist-note{font-size:.68rem;margin-top:4px;color:var(--muted);}
+  .hist-note b{font-weight:700;}
+
+  footer{text-align:center;font-size:.72rem;color:#3f4d5c;margin-top:26px;}
+</style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Connecting to cloud...</div>
+</div>
+
+<div class="app">
+  <div id="statusBar" class="status-bar">🔌 Initializing...</div>
+
+  <header>
+    <div class="brand">
+      <div class="logo">🔥</div>
+      <div>
+        <h1>Calorie Tracker</h1>
+        <p>Track intake · Manage your deficit</p>
+      </div>
+    </div>
+    <div class="today-chip">Maintenance: <b id="chipMaint">—</b> kcal · Target: <b id="chipTarget">—</b> kcal</div>
+  </header>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="date-nav">
+          <button class="icon-btn" id="prevDay" title="Previous day">‹</button>
+          <input type="text" id="dateInput" placeholder="DD/MM/YYYY" maxlength="10" inputmode="numeric" />
+          <button class="icon-btn" id="nextDay" title="Next day">›</button>
+          <button class="ghost-btn" id="todayBtn">Today</button>
+        </div>
+
+        <div class="future-banner" id="futureBanner">⚠️ Future date selected — you can't log food for a future day.</div>
+
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 200 200">
+            <circle class="ring-bg" cx="100" cy="100" r="80"></circle>
+            <circle class="ring-fg" id="ringFg" cx="100" cy="100" r="80"></circle>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-big" id="ringConsumed">0</div>
+            <div class="ring-sub">of <span id="ringTarget">0</span> kcal</div>
+            <div class="ring-pill" id="ringPill">0 left</div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><div class="label">Eaten</div><div class="value" id="statEaten">0<small>kcal</small></div></div>
+          <div class="stat"><div class="label">Target</div><div class="value" id="statTarget">0<small>kcal</small></div></div>
+          <div class="stat"><div class="label">Remaining</div><div class="value" id="statRemain">0<small>kcal</small></div></div>
+          <div class="stat"><div class="label">Deficit</div><div class="value" id="statDeficit">0<small>kcal</small></div></div>
+        </div>
+
+        <form class="add-form" id="addForm" autocomplete="off">
+          <input type="text" id="foodName" placeholder="Food / meal (optional)" />
+          <input type="number" id="foodKcal" placeholder="kcal" min="1" step="1" inputmode="numeric" required />
+          <button type="submit" id="addBtn">Add</button>
+        </form>
+
+        <div class="list-head">
+          <span id="listTitle">Today's entries</span>
+          <span><button class="ghost-btn" id="clearDay" style="padding:4px 10px;font-size:.72rem;">Clear day</button></span>
+        </div>
+        <ul class="food-list" id="foodList"></ul>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <h2 style="margin:0;">Maintenance &amp; Target</h2>
+          <button type="button" id="editBtn" class="ghost-btn" style="padding:6px 14px;font-size:.78rem;">✏️ Edit</button>
+        </div>
+        <div class="field">
+          <label for="maintenance">Maintenance calories (TDEE)</label>
+          <input type="number" id="maintenance" min="0" step="10" inputmode="numeric" placeholder="e.g. 2500" disabled />
+        </div>
+        <div class="field">
+          <label for="mode">Goal</label>
+          <select id="mode" disabled>
+            <option value="deficit">Cut — calorie deficit</option>
+            <option value="maintain">Maintain weight</option>
+            <option value="surplus">Bulk — calorie surplus</option>
+          </select>
+        </div>
+        <div class="field" id="adjustField">
+          <label for="adjustment">Daily adjustment (kcal)</label>
+          <input type="number" id="adjustment" min="0" step="50" inputmode="numeric" placeholder="e.g. 500" disabled />
+        </div>
+        <div class="target-box">
+          <div class="tb-label">Daily target</div>
+          <div class="tb-value" id="targetValue">0 <small>kcal</small></div>
+        </div>
+        <p class="hint" id="setupHint"></p>
+      </div>
+
+      <div class="card">
+        <h2>Last 7 days</h2>
+        <div id="history"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Data synced to your private cloud ☁️</footer>
+</div>
+
+<script type="module">
+// ============================================================
+// ⚠️ YAHAN APNI SUPABASE DETAILS PASTE KARO
+// ============================================================
+const SUPABASE_URL = "https://nzzhnekuxxcyxrxmenfn.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56emhuZWt1eHhjeXhyeG1lbmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3ODUxNjUsImV4cCI6MjEwNzM2MTE2NX0.-hVACW87tNNbCFVKh14VwWjL6_b5K3Exp8-TCaaJtOA";
+// ============================================================
+
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const CIRC = 2 * Math.PI * 80;
+let currentUser = null;
+let state = {
+  maintenance: 2500,
+  mode: "deficit",
+  adjustment: 500,
+  logs: {}
+};
+let currentDate = todayISO();
+let isEditing = false;
+let isDataLoaded = false;
+
+const $ = id => document.getElementById(id);
+const el = {
+  loadingOverlay: $("loadingOverlay"),
+  statusBar: $("statusBar"),
+  editBtn: $("editBtn"),
+  chipMaint: $("chipMaint"),
+  chipTarget: $("chipTarget"),
+  dateInput: $("dateInput"),
+  prevDay: $("prevDay"),
+  nextDay: $("nextDay"),
+  todayBtn: $("todayBtn"),
+  ringFg: $("ringFg"),
+  ringConsumed: $("ringConsumed"),
+  ringTarget: $("ringTarget"),
+  ringPill: $("ringPill"),
+  statEaten: $("statEaten"),
+  statTarget: $("statTarget"),
+  statRemain: $("statRemain"),
+  statDeficit: $("statDeficit"),
+  addForm: $("addForm"),
+  foodName: $("foodName"),
+  foodKcal: $("foodKcal"),
+  addBtn: $("addBtn"),
+  futureBanner: $("futureBanner"),
+  listTitle: $("listTitle"),
+  foodList: $("foodList"),
+  clearDay: $("clearDay"),
+  maintenance: $("maintenance"),
+  mode: $("mode"),
+  adjustment: $("adjustment"),
+  adjustField: $("adjustField"),
+  targetValue: $("targetValue"),
+  setupHint: $("setupHint"),
+  history: $("history")
+};
+
+/* ---------------- Helpers ---------------- */
+function todayISO(){
+  const d = new Date();
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - off).toISOString().slice(0,10);
+}
+function isoToDate(iso){ const p = iso.split("-").map(Number); return new Date(p[0], p[1]-1, p[2]); }
+function shiftDate(iso, days){
+  const d = isoToDate(iso); d.setDate(d.getDate() + days);
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - off).toISOString().slice(0,10);
+}
+function fmtShort(iso){
+  return isoToDate(iso).toLocaleDateString(undefined, { weekday:"short", day:"numeric", month:"short" });
+}
+function fmtLong(iso){
+  return isoToDate(iso).toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+}
+function isFuture(iso){ return iso > todayISO(); }
+// ISO (YYYY-MM-DD) → Display (DD/MM/YYYY)
+function isoToDisplay(iso){
+  if(!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+// Display (DD/MM/YYYY) → ISO (YYYY-MM-DD)
+function displayToISO(disp){
+  const parts = disp.split("/");
+  if(parts.length !== 3) return null;
+  const [d, m, y] = parts.map(s => s.trim());
+  if(d.length !== 2 || m.length !== 2 || y.length !== 4) return null;
+  const day = parseInt(d, 10), mon = parseInt(m, 10), yr = parseInt(y, 10);
+  if(mon < 1 || mon > 12 || day < 1 || day > 31) return null;
+  // Validate real date (jaise 31/02 invalid hai)
+  const test = new Date(yr, mon-1, day);
+  if(test.getFullYear() !== yr || test.getMonth() !== mon-1 || test.getDate() !== day) return null;
+  return `${y}-${m}-${d}`;
+}
+function num(n){ return Math.round(n).toLocaleString(); }
+function targetKcal(){
+  const m = Number(state.maintenance) || 0;
+  const a = Number(state.adjustment) || 0;
+  if(state.mode === "deficit")  return Math.max(0, Math.round(m - a));
+  if(state.mode === "surplus")  return Math.round(m + a);
+  return Math.round(m);
+}
+function entriesFor(iso){ return Array.isArray(state.logs[iso]) ? state.logs[iso] : []; }
+function consumedFor(iso){ return entriesFor(iso).reduce((s,e) => s + (Number(e.kcal) || 0), 0); }
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[m]));
+}
+function setStatus(msg, type){
+  el.statusBar.textContent = msg;
+  el.statusBar.className = "status-bar" + (type ? " " + type : "");
+}
+
+/* ---------------- Cloud Sync ---------------- */
+async function loadFromCloud(){
+  setStatus("☁️ Loading your data...", "syncing");
+  const { data, error } = await supabase
+    .from("tracker_data")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
+
+  if(error){
+    console.error("Load error:", error);
+    setStatus("❌ Load failed: " + error.message, "offline");
+    return;
+  }
+
+  if(data){
+    state = {
+      maintenance: data.maintenance ?? 2500,
+      mode: data.mode ?? "deficit",
+      adjustment: data.adjustment ?? 500,
+      logs: data.logs ?? {}
+    };
+  } else {
+    // Pehli baar — defaults save karo
+    await saveToCloud(true);
+  }
+  isDataLoaded = true;
+  syncSettingsInputs();
+  setEditing(false);
+  render();
+  setStatus("✅ Synced with cloud", "online");
+}
+
+async function saveToCloud(silent){
+  if(!currentUser || !isDataLoaded) return;
+  if(!silent) setStatus("☁️ Saving...", "syncing");
+
+  const { error } = await supabase
+    .from("tracker_data")
+    .upsert({
+      user_id: currentUser.id,
+      maintenance: state.maintenance,
+      mode: state.mode,
+      adjustment: state.adjustment,
+      logs: state.logs,
+      updated_at: new Date().toISOString()
+    });
+
+  if(error){
+    console.error("Save error:", error);
+    setStatus("❌ Save failed: " + error.message, "offline");
+    return;
+  }
+  if(!silent) setStatus("✅ Synced", "online");
+}
+
+/* ---------------- Settings Lock ---------------- */
+function syncSettingsInputs(){
+  el.maintenance.value = state.maintenance;
+  el.mode.value = state.mode;
+  el.adjustment.value = state.adjustment;
+}
+function setEditing(on){
+  isEditing = on;
+  el.maintenance.disabled = !on;
+  el.mode.disabled = !on;
+  el.adjustment.disabled = !on;
+  if(on && el.mode.value === "maintain") el.adjustment.disabled = true;
+  if(on){
+    el.editBtn.textContent = "✔ Save";
+    el.editBtn.style.background = "linear-gradient(145deg,#22c55e,#16a34a)";
+    el.editBtn.style.color = "#04140a";
+    el.editBtn.style.border = "none";
+    el.editBtn.style.fontWeight = "700";
+    el.maintenance.focus();
+  }else{
+    el.editBtn.textContent = "✏️ Edit";
+    el.editBtn.style.background = "";
+    el.editBtn.style.color = "";
+    el.editBtn.style.border = "";
+    el.editBtn.style.fontWeight = "";
+  }
+}
+
+/* ---------------- Future Lock ---------------- */
+function applyFutureLock(){
+  const future = isFuture(currentDate);
+  el.foodName.disabled = future;
+  el.foodKcal.disabled = future;
+  el.addBtn.disabled = future;
+  el.futureBanner.classList.toggle("show", future);
+  const nextDayISO = shiftDate(currentDate, 1);
+  el.nextDay.disabled = isFuture(nextDayISO);
+  el.foodName.placeholder = future ? "Can't add for a future date" : "Food / meal (optional)";
+  el.foodKcal.placeholder = future ? "—" : "kcal";
+}
+
+/* ---------------- Render ---------------- */
+function render(){
+  const target = targetKcal();
+  const maintenance = Number(state.maintenance) || 0;
+  const list = entriesFor(currentDate);
+  const consumed = list.reduce((s,e) => s + (Number(e.kcal) || 0), 0);
+
+  el.chipMaint.textContent = num(maintenance);
+  el.chipTarget.textContent = num(target);
+  el.dateInput.value = isoToDisplay(currentDate);
+
+  const isToday = currentDate === todayISO();
+  el.listTitle.textContent = (isToday ? "Today's entries" : fmtShort(currentDate) + " entries")
+                            + " · " + list.length + " item" + (list.length === 1 ? "" : "s");
+
+  const ratio = target > 0 ? consumed / target : 0;
+  const filled = Math.min(ratio, 1);
+  el.ringFg.style.strokeDashoffset = String(CIRC * (1 - filled));
+
+  let ringColor = "var(--accent)";
+  if(target > 0 && consumed > target) ringColor = "var(--danger)";
+  else if(target > 0 && ratio >= 0.9) ringColor = "var(--warn)";
+  el.ringFg.style.stroke = ringColor;
+
+  el.ringConsumed.textContent = num(consumed);
+  el.ringTarget.textContent = num(target);
+
+  const remaining = target - consumed;
+  el.ringPill.classList.remove("over","warn");
+  if(remaining >= 0){
+    el.ringPill.textContent = num(remaining) + " kcal left";
+    if(target > 0 && consumed / target >= 0.9) el.ringPill.classList.add("warn");
+  }else{
+    el.ringPill.textContent = num(Math.abs(remaining)) + " kcal over";
+    el.ringPill.classList.add("over");
+  }
+
+  el.statEaten.innerHTML = num(consumed) + "<small>kcal</small>";
+  el.statTarget.innerHTML = num(target) + "<small>kcal</small>";
+
+  if(remaining >= 0){
+    el.statRemain.innerHTML = num(remaining) + "<small>kcal</small>";
+    el.statRemain.className = "value v-good";
+  }else{
+    el.statRemain.innerHTML = num(Math.abs(remaining)) + "<small>over</small>";
+    el.statRemain.className = "value v-bad";
+  }
+
+  const deficit = maintenance - consumed;
+  if(deficit >= 0){
+    el.statDeficit.innerHTML = num(deficit) + "<small>kcal</small>";
+    el.statDeficit.className = "value v-good";
+  }else{
+    el.statDeficit.innerHTML = num(Math.abs(deficit)) + "<small>surplus</small>";
+    el.statDeficit.className = "value v-bad";
+  }
+
+  el.targetValue.innerHTML = num(target) + " <small>kcal</small>";
+  el.adjustField.style.opacity = state.mode === "maintain" ? ".35" : "1";
+  if(!isEditing) el.adjustment.disabled = true;
+  else el.adjustment.disabled = state.mode === "maintain";
+
+  const diff = maintenance - target;
+  if(state.mode === "deficit"){
+    el.setupHint.textContent = `Eating ${num(target)} kcal against a ${num(maintenance)} kcal maintenance = a ${num(diff)} kcal daily deficit (≈ ${(diff*7/7700).toFixed(2)} kg fat per week).`;
+  }else if(state.mode === "surplus"){
+    el.setupHint.textContent = `Eating ${num(target)} kcal against a ${num(maintenance)} kcal maintenance = a ${num(target-maintenance)} kcal daily surplus.`;
+  }else{
+    el.setupHint.textContent = `Maintaining: eat around ${num(target)} kcal per day.`;
+  }
+
+  renderList(list);
+  renderHistory();
+  applyFutureLock();
+}
+
+function renderList(list){
+  if(!list.length){
+    el.foodList.innerHTML = '<li class="empty">No entries yet — add your first meal above 🍽️</li>';
+    return;
+  }
+  const sorted = list.slice().reverse();
+  el.foodList.innerHTML = sorted.map(item => `
+    <li class="food-item">
+      <span class="food-name">${escapeHtml(item.name)}</span>
+      <span class="food-kcal">${num(item.kcal)} kcal</span>
+      <button class="del-btn" data-del="${item.id}" title="Remove" aria-label="Remove">×</button>
+    </li>
+  `).join("");
+}
+
+function renderHistory(){
+  const target = targetKcal();
+  const maintenance = Number(state.maintenance) || 0;
+  const today = todayISO();
+  let html = "";
+
+  for(let i = 6; i >= 0; i--){
+    const iso = shiftDate(today, -i);
+    const c = consumedFor(iso);
+    const pct = target > 0 ? Math.min((c / target) * 100, 100) : 0;
+    const over = target > 0 && c > target;
+    const color = c === 0 ? "#2a3644" : (over ? "var(--danger)" : (c/target >= .9 ? "var(--warn)" : "var(--accent)"));
+    const net = maintenance - c;
+    const note = c === 0
+      ? "No data"
+      : (net >= 0 ? `<b style="color:var(--accent)">${num(net)} kcal deficit</b>`
+                  : `<b style="color:var(--danger)">${num(Math.abs(net))} kcal surplus</b>`);
+
+    html += `
+      <div class="hist-row">
+        <div class="hist-top">
+          <span class="hist-date">${fmtShort(iso)}${iso === today ? " · Today" : ""}</span>
+          <span class="hist-kcal" style="color:${c === 0 ? '#4d5d6e' : 'var(--text)'}">${num(c)} <span style="color:#5a6b7d;font-weight:500">/ ${num(target)}</span></span>
+        </div>
+        <div class="hist-bar"><div class="hist-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="hist-note">${note}</div>
+      </div>`;
+  }
+  el.history.innerHTML = html;
+}
+
+/* ---------------- Events ---------------- */
+el.prevDay.addEventListener("click", () => { currentDate = shiftDate(currentDate, -1); render(); });
+el.nextDay.addEventListener("click", () => {
+  const next = shiftDate(currentDate, 1);
+  if(isFuture(next)) return;
+  currentDate = next;
+  render();
+});
+el.todayBtn.addEventListener("click", () => { currentDate = todayISO(); render(); });
+// Auto-format: jaise type karo, slashes apne aap lag jaye
+el.dateInput.addEventListener("input", e => {
+  let v = e.target.value.replace(/\D/g, ""); // sirf digits rakho
+  if(v.length >= 3 && v.length <= 4) v = v.slice(0,2) + "/" + v.slice(2);
+  else if(v.length >= 5) v = v.slice(0,2) + "/" + v.slice(2,4) + "/" + v.slice(4,8);
+  e.target.value = v;
+});
+
+// Enter dabane pe apply karo
+el.dateInput.addEventListener("keydown", e => {
+  if(e.key === "Enter"){
+    e.preventDefault();
+    applyDateInput();
+  }
+});
+
+// Bahar click karne pe apply karo
+el.dateInput.addEventListener("blur", applyDateInput);
+
+// Date apply karne ka function
+function applyDateInput(){
+  const disp = el.dateInput.value.trim();
+  if(!disp){
+    el.dateInput.value = isoToDisplay(currentDate);
+    return;
+  }
+  const iso = displayToISO(disp);
+  if(!iso){
+    alert("Date sahi format me daalo: DD/MM/YYYY (jaise 12/10/2026)");
+    el.dateInput.value = isoToDisplay(currentDate);
+    return;
+  }
+  if(isFuture(iso)){
+    alert("Future date select nahi kar sakte. Aaj ya usse pehle ki date chuno.");
+    el.dateInput.value = isoToDisplay(currentDate);
+    return;
+  }
+  currentDate = iso;
+  render();
+}
+
+el.addForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  if(isFuture(currentDate)){
+    alert("Future date ke liye food add nahi kar sakte.");
+    return;
+  }
+  const kcal = Math.round(Number(el.foodKcal.value));
+  if(!kcal || kcal <= 0){ el.foodKcal.focus(); return; }
+
+  const name = el.foodName.value.trim() || "Food";
+  if(!Array.isArray(state.logs[currentDate])) state.logs[currentDate] = [];
+  state.logs[currentDate].push({
+    id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now() + Math.random()),
+    name: name,
+    kcal: kcal
+  });
+  el.foodName.value = "";
+  el.foodKcal.value = "";
+  render();
+  await saveToCloud();
+  el.foodName.focus();
+});
+
+el.foodList.addEventListener("click", async e => {
+  const btn = e.target.closest("[data-del]");
+  if(!btn) return;
+  const id = btn.getAttribute("data-del");
+  state.logs[currentDate] = entriesFor(currentDate).filter(x => x.id !== id);
+  if(!state.logs[currentDate].length) delete state.logs[currentDate];
+  render();
+  await saveToCloud();
+});
+
+el.clearDay.addEventListener("click", async () => {
+  if(isFuture(currentDate)){
+    alert("Future date clear nahi kar sakte.");
+    return;
+  }
+  if(!entriesFor(currentDate).length) return;
+  if(confirm("Remove all entries for " + fmtLong(currentDate) + "?")){
+    delete state.logs[currentDate];
+    render();
+    await saveToCloud();
+  }
+});
+
+el.editBtn.addEventListener("click", async () => {
+  if(!isEditing){
+    setEditing(true);
+  }else{
+    const m = Number(el.maintenance.value) || 0;
+    if(m <= 0){
+      alert("Maintenance calories 0 se bada hona chahiye!");
+      el.maintenance.focus();
+      return;
+    }
+    state.maintenance = Math.max(0, m);
+    state.mode        = el.mode.value;
+    state.adjustment  = Math.max(0, Number(el.adjustment.value) || 0);
+    setEditing(false);
+    render();
+    await saveToCloud();
+  }
+});
+
+el.mode.addEventListener("change", () => {
+  if(isEditing){
+    el.adjustment.disabled = el.mode.value === "maintain";
+  }
+});
+
+/* ---------------- Init ---------------- */
+(async function init(){
+  try {
+    // Anonymous sign-in
+    const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+    if(authError){
+      console.error("Auth error:", authError);
+      setStatus("❌ Auth failed: " + authError.message, "offline");
+      el.loadingOverlay.classList.add("hidden");
+      return;
+    }
+    currentUser = authData.user;
+    console.log("Logged in as anonymous user:", currentUser.id);
+
+    await loadFromCloud();
+    el.loadingOverlay.classList.add("hidden");
+  } catch(err){
+    console.error(err);
+    setStatus("❌ Error: " + err.message, "offline");
+    el.loadingOverlay.classList.add("hidden");
+  }
+})();
+</script>
+</body>
+</html>
