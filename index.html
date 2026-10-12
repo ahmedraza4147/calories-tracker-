@@ -900,6 +900,73 @@ sendMagicLinkBtn.addEventListener("click", async () => {
 /* ---------------- Main Init ---------------- */
 (async function init(){
   try {
+    console.log("🚀 Init starting...");
+    console.log("URL hash:", window.location.hash);
+
+    // Auth state change listener pehle lagao
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("📢 Auth event:", event, "Session?", !!session);
+      
+      if(event === "SIGNED_IN" && session && session.user){
+        currentUser = session.user;
+        console.log("✅ Signed in:", currentUser.id, currentUser.email || "(no email)");
+        hideLoginScreen();
+        loadingOverlay.classList.remove("hidden");
+        await loadFromCloud();
+        loadingOverlay.classList.add("hidden");
+        // URL se token clear karo
+        if(window.location.hash){
+          history.replaceState(null, "", window.location.pathname);
+        }
+      }
+      if(event === "SIGNED_OUT"){
+        currentUser = null;
+        showLoginScreen();
+      }
+    });
+
+    // Thoda wait karo taki magic link ka token process ho jaye
+    await new Promise(r => setTimeout(r, 500));
+
+    // Ab session check karo
+    const { data: { session }, error: sessErr } = await supabase.auth.getSession();
+    
+    if(sessErr){
+      console.error("Session error:", sessErr);
+    }
+    
+    console.log("📦 Session found?", !!session);
+
+    if(session && session.user){
+      // User logged in hai
+      currentUser = session.user;
+      console.log("✅ Already logged in:", currentUser.id, currentUser.email || "(no email)");
+      hideLoginScreen();
+      loadingOverlay.classList.remove("hidden");
+      await loadFromCloud();
+      loadingOverlay.classList.add("hidden");
+      // URL clean karo
+      if(window.location.hash){
+        history.replaceState(null, "", window.location.pathname);
+      }
+    } else {
+      // Koi session nahi — login screen dikhao
+      console.log("👤 No session — showing login screen");
+      showLoginScreen();
+    }
+
+  } catch(err){
+    console.error("❌ Init error:", err);
+    setStatus("❌ Error: " + err.message, "offline");
+    loadingOverlay.classList.add("hidden");
+    showLoginScreen();
+  }
+})();
+
+
+/* ---------------- Main Init ---------------- */
+(async function init(){
+  try {
     // 1. URL me session check karo (magic link se wapas aaye ho?)
     const { data: sessionData } = await supabase.auth.getSession();
     let session = sessionData?.session;
