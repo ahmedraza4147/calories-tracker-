@@ -38,13 +38,82 @@
     z-index:999; gap:16px;
   }
   #loadingOverlay.hidden{ display:none; }
-  #loginScreen.hidden{ display:none !important; }
   .spinner{
     width:44px; height:44px; border:4px solid #1e2a38; border-top-color:#22c55e;
     border-radius:50%; animation:spin 1s linear infinite;
   }
   @keyframes spin{ to { transform:rotate(360deg); } }
   .loading-text{ color:var(--muted); font-size:.9rem; }
+
+  /* Login Screen */
+  #authScreen{
+    position:fixed; inset:0; background:#0a0e13; z-index:1000;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    overflow-y:auto;
+  }
+  #authScreen.hidden{ display:none !important; }
+  .auth-card{
+    background:linear-gradient(180deg,#111823,#0d131b);
+    border:1px solid #1e2a38; border-radius:16px; padding:28px 26px;
+    max-width:400px; width:100%; box-shadow:0 20px 60px -20px #000;
+    margin:auto;
+  }
+  .auth-brand{display:flex; align-items:center; gap:12px; margin-bottom:6px;}
+  .auth-logo{
+    width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+    background:linear-gradient(145deg,#22c55e,#0ea5e9);font-size:22px;
+  }
+  .auth-title{font-size:1.15rem;margin:0;color:#e8eef6;}
+  .auth-sub{margin:2px 0 0;font-size:.72rem;color:#8496a8;}
+
+  .auth-tabs{display:flex; gap:6px; margin:18px 0 14px; background:#0a1017; padding:4px; border-radius:10px; border:1px solid #1e2a38;}
+  .auth-tab{
+    flex:1; text-align:center; padding:8px; font-size:.82rem; color:#8496a8;
+    cursor:pointer; border-radius:7px; transition:.15s; font-weight:600;
+    font-family:inherit; background:transparent; border:none;
+  }
+  .auth-tab.active{ background:#22c55e; color:#04140a; }
+
+  .auth-field{margin-bottom:10px;}
+  .auth-field label{display:block; font-size:.72rem; color:#8496a8; margin-bottom:5px;}
+  .auth-field input{
+    width:100%; background:#0a1017; border:1px solid #1e2a38; color:#e8eef6;
+    border-radius:10px; padding:11px 13px; font-size:.9rem; font-family:inherit;
+    outline:none; transition:.15s;
+  }
+  .auth-field input:focus{border-color:#2d4257;}
+
+  .auth-btn{
+    width:100%; background:linear-gradient(145deg,#22c55e,#16a34a);
+    border:none; color:#04140a; font-weight:700; font-size:.9rem;
+    border-radius:10px; padding:12px; cursor:pointer; font-family:inherit;
+    margin-top:6px; transition:.15s;
+  }
+  .auth-btn:hover:not(:disabled){filter:brightness(1.08);}
+  .auth-btn:disabled{opacity:.6; cursor:not-allowed;}
+
+  .auth-msg{
+    margin-top:12px; font-size:.78rem; color:#8496a8; text-align:center;
+    min-height:18px; line-height:1.5;
+  }
+  .auth-hint{color:#4d5d6e; font-size:.7rem; margin:16px 0 0; text-align:center; line-height:1.5;}
+  .auth-forgot{
+    display:block; text-align:right; font-size:.72rem; color:#8496a8;
+    margin-top:-4px; margin-bottom:8px; cursor:pointer; text-decoration:underline;
+    background:none; border:none; font-family:inherit; padding:0;
+  }
+  .auth-forgot:hover{color:#22c55e;}
+
+  .user-bar{
+    display:flex; justify-content:flex-end; align-items:center; gap:10px;
+    margin-bottom:10px; font-size:.75rem; color:var(--muted);
+  }
+  .user-bar button{
+    background:#0a1017; border:1px solid var(--border); color:var(--muted);
+    border-radius:8px; padding:5px 11px; font-size:.72rem; cursor:pointer;
+    font-family:inherit; transition:.15s;
+  }
+  .user-bar button:hover{color:var(--danger); border-color:#4d1c1f;}
 
   /* Status bar */
   .status-bar{
@@ -90,7 +159,7 @@
     color:var(--text);border-radius:10px;padding:9px 12px;font-size:.85rem;
     font-family:inherit;outline:none;
   }
- .date-nav input[type="text"]:focus{border-color:#2d4257;}
+  .date-nav input[type="text"]:focus{border-color:#2d4257;}
   .icon-btn{
     width:38px;height:38px;flex:0 0 auto;border-radius:10px;cursor:pointer;
     background:#0a1017;border:1px solid var(--border);color:var(--text);
@@ -220,61 +289,58 @@
 </style>
 </head>
 <body>
-<!-- Login Screen -->
-<div id="loginScreen" style="
-  position:fixed; inset:0; background:#0a0e13; z-index:1000;
-  display:flex; align-items:center; justify-content:center; padding:20px;
-">
-  <div style="
-    background:linear-gradient(180deg,#111823,#0d131b);
-    border:1px solid #1e2a38; border-radius:16px; padding:32px 28px;
-    max-width:400px; width:100%; box-shadow:0 20px 60px -20px #000;
-  ">
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-      <div style="
-        width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
-        background:linear-gradient(145deg,#22c55e,#0ea5e9);font-size:22px;
-      ">🔥</div>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo">🔥</div>
       <div>
-        <h1 style="font-size:1.2rem;margin:0;color:#e8eef6;">Calorie Tracker</h1>
-        <p style="margin:2px 0 0;font-size:.75rem;color:#8496a8;">Login to sync your data</p>
+        <h1 class="auth-title">Calorie Tracker</h1>
+        <p class="auth-sub">Login to sync your data</p>
       </div>
     </div>
 
-    <p style="color:#8496a8;font-size:.82rem;margin:18px 0 12px;line-height:1.5;">
-      Apna email daalo — hum tumhe ek <b style="color:#e8eef6;">magic link</b> bhejenge. Us link pe click karke same data sab devices pe access kar sakte ho.
-    </p>
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab active" id="tabLogin">Login</button>
+      <button type="button" class="auth-tab" id="tabSignup">Sign Up</button>
+    </div>
 
-    <input type="email" id="emailInput" placeholder="tumhara@email.com" style="
-      width:100%; background:#0a1017; border:1px solid #1e2a38; color:#e8eef6;
-      border-radius:10px; padding:12px 14px; font-size:.92rem; font-family:inherit;
-      outline:none; margin-bottom:10px; box-sizing:border-box;
-    " />
+    <div class="auth-field">
+      <label for="emailInput">Email</label>
+      <input type="email" id="emailInput" placeholder="tumhara@email.com" autocomplete="email" />
+    </div>
 
-    <button type="button" id="sendMagicLinkBtn" style="
-      width:100%; background:linear-gradient(145deg,#22c55e,#16a34a);
-      border:none; color:#04140a; font-weight:700; font-size:.9rem;
-      border-radius:10px; padding:12px; cursor:pointer; font-family:inherit;
-    ">📧 Send Magic Link</button>
+    <div class="auth-field">
+      <label for="passwordInput">Password</label>
+      <input type="password" id="passwordInput" placeholder="Kam se kam 6 characters" autocomplete="current-password" />
+    </div>
 
-    <div id="loginMessage" style="
-      margin-top:14px; font-size:.8rem; color:#8496a8; text-align:center;
-      min-height:20px; line-height:1.5;
-    "></div>
+    <button type="button" class="auth-btn" id="submitAuthBtn">Login</button>
 
-    <p style="color:#4d5d6e; font-size:.7rem; margin:18px 0 0; text-align:center;">
-      Ek hi email se sab devices pe login karo — same data rahega.
+    <div class="auth-msg" id="authMessage"></div>
+
+    <button type="button" class="auth-forgot" id="forgotBtn">Forgot password?</button>
+
+    <p class="auth-hint">
+      Ek hi email + password se sab devices pe login karo — same data rahega.
     </p>
   </div>
 </div>
+
 <!-- Loading Overlay -->
-<div id="loadingOverlay">
+<div id="loadingOverlay" class="hidden">
   <div class="spinner"></div>
   <div class="loading-text">Connecting to cloud...</div>
 </div>
 
-<div class="app">
+<div class="app" id="appRoot" style="display:none;">
   <div id="statusBar" class="status-bar">🔌 Initializing...</div>
+
+  <div class="user-bar">
+    <span id="userEmailSpan"></span>
+    <button type="button" id="logoutBtn">Logout</button>
+  </div>
 
   <header>
     <div class="brand">
@@ -373,7 +439,7 @@
 
 <script type="module">
 // ============================================================
-// ⚠️ YAHAN APNI SUPABASE DETAILS PASTE KARO
+// ⚠️ APNI SUPABASE DETAILS
 // ============================================================
 const SUPABASE_URL = "https://nzzhnekuxxcyxrxmenfn.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56emhuZWt1eHhjeXhyeG1lbmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3ODUxNjUsImV4cCI6MjEwNzM2MTE2NX0.-hVACW87tNNbCFVKh14VwWjL6_b5K3Exp8-TCaaJtOA";
@@ -381,27 +447,13 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-// Custom storage jo pakka localStorage use kare
-const customStorage = {
-  getItem: (key) => {
-    try { return window.localStorage.getItem(key); } catch(e) { return null; }
-  },
-  setItem: (key, value) => {
-    try { window.localStorage.setItem(key, value); } catch(e) {}
-  },
-  removeItem: (key) => {
-    try { window.localStorage.removeItem(key); } catch(e) {}
-  }
-};
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
-    storage: customStorage,
-    storageKey: 'calorie-tracker-auth',
+    storage: window.localStorage,
+    storageKey: 'calorie-tracker-auth-v2',
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
-    flowType: 'implicit'
+    detectSessionInUrl: false
   }
 });
 
@@ -416,9 +468,23 @@ let state = {
 let currentDate = todayISO();
 let isEditing = false;
 let isDataLoaded = false;
+let authMode = "login"; // "login" or "signup"
 
 const $ = id => document.getElementById(id);
 const el = {
+  // Auth
+  authScreen: $("authScreen"),
+  tabLogin: $("tabLogin"),
+  tabSignup: $("tabSignup"),
+  emailInput: $("emailInput"),
+  passwordInput: $("passwordInput"),
+  submitAuthBtn: $("submitAuthBtn"),
+  authMessage: $("authMessage"),
+  forgotBtn: $("forgotBtn"),
+  // App
+  appRoot: $("appRoot"),
+  userEmailSpan: $("userEmailSpan"),
+  logoutBtn: $("logoutBtn"),
   loadingOverlay: $("loadingOverlay"),
   statusBar: $("statusBar"),
   editBtn: $("editBtn"),
@@ -472,14 +538,11 @@ function fmtLong(iso){
   return isoToDate(iso).toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
 }
 function isFuture(iso){ return iso > todayISO(); }
-// ISO (YYYY-MM-DD) → Display (DD/MM/YYYY)
 function isoToDisplay(iso){
   if(!iso) return "";
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
 }
-
-// Display (DD/MM/YYYY) → ISO (YYYY-MM-DD)
 function displayToISO(disp){
   const parts = disp.split("/");
   if(parts.length !== 3) return null;
@@ -487,7 +550,6 @@ function displayToISO(disp){
   if(d.length !== 2 || m.length !== 2 || y.length !== 4) return null;
   const day = parseInt(d, 10), mon = parseInt(m, 10), yr = parseInt(y, 10);
   if(mon < 1 || mon > 12 || day < 1 || day > 31) return null;
-  // Validate real date (jaise 31/02 invalid hai)
   const test = new Date(yr, mon-1, day);
   if(test.getFullYear() !== yr || test.getMonth() !== mon-1 || test.getDate() !== day) return null;
   return `${y}-${m}-${d}`;
@@ -511,6 +573,108 @@ function setStatus(msg, type){
   el.statusBar.textContent = msg;
   el.statusBar.className = "status-bar" + (type ? " " + type : "");
 }
+function setAuthMessage(msg, color){
+  el.authMessage.textContent = msg;
+  el.authMessage.style.color = color || "#8496a8";
+}
+
+/* ---------------- Auth Screen ---------------- */
+function showAuthScreen(){
+  el.authScreen.classList.remove("hidden");
+  el.appRoot.style.display = "none";
+  el.loadingOverlay.classList.add("hidden");
+}
+function hideAuthScreen(){
+  el.authScreen.classList.add("hidden");
+  el.appRoot.style.display = "block";
+}
+function updateAuthUI(){
+  if(authMode === "login"){
+    el.tabLogin.classList.add("active");
+    el.tabSignup.classList.remove("active");
+    el.submitAuthBtn.textContent = "Login";
+    el.forgotBtn.style.display = "block";
+    el.passwordInput.autocomplete = "current-password";
+  }else{
+    el.tabLogin.classList.remove("active");
+    el.tabSignup.classList.add("active");
+    el.submitAuthBtn.textContent = "Create Account";
+    el.forgotBtn.style.display = "none";
+    el.passwordInput.autocomplete = "new-password";
+  }
+  setAuthMessage("", "");
+}
+el.tabLogin.addEventListener("click", () => { authMode = "login"; updateAuthUI(); });
+el.tabSignup.addEventListener("click", () => { authMode = "signup"; updateAuthUI(); });
+
+/* ---------------- Submit Auth ---------------- */
+el.submitAuthBtn.addEventListener("click", async () => {
+  const email = el.emailInput.value.trim();
+  const password = el.passwordInput.value;
+
+  if(!email || !email.includes("@")){
+    setAuthMessage("❌ Sahi email daalo", "#ef4444"); return;
+  }
+  if(!password || password.length < 6){
+    setAuthMessage("❌ Password kam se kam 6 characters ka hona chahiye", "#ef4444"); return;
+  }
+
+  el.submitAuthBtn.disabled = true;
+  setAuthMessage("⏳ Please wait...", "#f59e0b");
+
+  try {
+    if(authMode === "signup"){
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if(error) throw error;
+      if(data.user && data.session){
+        setAuthMessage("✅ Account ban gaya! Loading...", "#22c55e");
+        // Auth state change listener will handle the rest
+      } else if(data.user && !data.session){
+        setAuthMessage("✅ Account ban gaya. Ab Login karo usi email/password se.", "#22c55e");
+        authMode = "login";
+        updateAuthUI();
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if(error) throw error;
+      setAuthMessage("✅ Login ho gaya! Loading...", "#22c55e");
+      // Auth listener will handle the rest
+    }
+  } catch(err){
+    console.error("Auth error:", err);
+    let msg = err.message || "Kuch galat ho gaya";
+    if(msg.includes("Invalid login credentials")) msg = "Email ya password galat hai";
+    if(msg.includes("User already registered")) msg = "Ye email pehle se registered hai — Login karo";
+    if(msg.includes("Email not confirmed")) msg = "Email confirm nahi hui. Supabase me 'Confirm email' OFF karo";
+    setAuthMessage("❌ " + msg, "#ef4444");
+  } finally {
+    el.submitAuthBtn.disabled = false;
+  }
+});
+
+/* ---------------- Forgot Password ---------------- */
+el.forgotBtn.addEventListener("click", async () => {
+  const email = el.emailInput.value.trim();
+  if(!email || !email.includes("@")){
+    setAuthMessage("❌ Pehle apna email daalo upar", "#ef4444"); return;
+  }
+  setAuthMessage("⏳ Reset link bhej rahe hai...", "#f59e0b");
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  if(error){
+    setAuthMessage("❌ " + error.message, "#ef4444");
+  } else {
+    setAuthMessage("✅ Reset link email pe bhej diya (spam bhi check karo)", "#22c55e");
+  }
+});
+
+/* ---------------- Logout ---------------- */
+el.logoutBtn.addEventListener("click", async () => {
+  if(!confirm("Logout karna hai? Data cloud me safe rahega.")) return;
+  await supabase.auth.signOut();
+  // Auth state change will handle
+});
 
 /* ---------------- Cloud Sync ---------------- */
 async function loadFromCloud(){
@@ -536,6 +700,7 @@ async function loadFromCloud(){
     };
   } else {
     // Pehli baar — defaults save karo
+    isDataLoaded = true;
     await saveToCloud(true);
   }
   isDataLoaded = true;
@@ -740,42 +905,29 @@ el.nextDay.addEventListener("click", () => {
   render();
 });
 el.todayBtn.addEventListener("click", () => { currentDate = todayISO(); render(); });
-// Auto-format: jaise type karo, slashes apne aap lag jaye
+
 el.dateInput.addEventListener("input", e => {
-  let v = e.target.value.replace(/\D/g, ""); // sirf digits rakho
+  let v = e.target.value.replace(/\D/g, "");
   if(v.length >= 3 && v.length <= 4) v = v.slice(0,2) + "/" + v.slice(2);
   else if(v.length >= 5) v = v.slice(0,2) + "/" + v.slice(2,4) + "/" + v.slice(4,8);
   e.target.value = v;
 });
-
-// Enter dabane pe apply karo
 el.dateInput.addEventListener("keydown", e => {
-  if(e.key === "Enter"){
-    e.preventDefault();
-    applyDateInput();
-  }
+  if(e.key === "Enter"){ e.preventDefault(); applyDateInput(); }
 });
-
-// Bahar click karne pe apply karo
 el.dateInput.addEventListener("blur", applyDateInput);
 
-// Date apply karne ka function
 function applyDateInput(){
   const disp = el.dateInput.value.trim();
-  if(!disp){
-    el.dateInput.value = isoToDisplay(currentDate);
-    return;
-  }
+  if(!disp){ el.dateInput.value = isoToDisplay(currentDate); return; }
   const iso = displayToISO(disp);
   if(!iso){
     alert("Date sahi format me daalo: DD/MM/YYYY (jaise 12/10/2026)");
-    el.dateInput.value = isoToDisplay(currentDate);
-    return;
+    el.dateInput.value = isoToDisplay(currentDate); return;
   }
   if(isFuture(iso)){
     alert("Future date select nahi kar sakte. Aaj ya usse pehle ki date chuno.");
-    el.dateInput.value = isoToDisplay(currentDate);
-    return;
+    el.dateInput.value = isoToDisplay(currentDate); return;
   }
   currentDate = iso;
   render();
@@ -784,8 +936,7 @@ function applyDateInput(){
 el.addForm.addEventListener("submit", async e => {
   e.preventDefault();
   if(isFuture(currentDate)){
-    alert("Future date ke liye food add nahi kar sakte.");
-    return;
+    alert("Future date ke liye food add nahi kar sakte."); return;
   }
   const kcal = Math.round(Number(el.foodKcal.value));
   if(!kcal || kcal <= 0){ el.foodKcal.focus(); return; }
@@ -816,8 +967,7 @@ el.foodList.addEventListener("click", async e => {
 
 el.clearDay.addEventListener("click", async () => {
   if(isFuture(currentDate)){
-    alert("Future date clear nahi kar sakte.");
-    return;
+    alert("Future date clear nahi kar sakte."); return;
   }
   if(!entriesFor(currentDate).length) return;
   if(confirm("Remove all entries for " + fmtLong(currentDate) + "?")){
@@ -834,8 +984,7 @@ el.editBtn.addEventListener("click", async () => {
     const m = Number(el.maintenance.value) || 0;
     if(m <= 0){
       alert("Maintenance calories 0 se bada hona chahiye!");
-      el.maintenance.focus();
-      return;
+      el.maintenance.focus(); return;
     }
     state.maintenance = Math.max(0, m);
     state.mode        = el.mode.value;
@@ -853,184 +1002,45 @@ el.mode.addEventListener("change", () => {
 });
 
 /* ---------------- Init ---------------- */
-/* ---------------- Login Screen Logic ---------------- */
-const loginScreen = document.getElementById("loginScreen");
-const loadingOverlay = document.getElementById("loadingOverlay");
-const emailInput = document.getElementById("emailInput");
-const sendMagicLinkBtn = document.getElementById("sendMagicLinkBtn");
-const loginMessage = document.getElementById("loginMessage");
+(async function init(){
+  updateAuthUI();
 
-function showLoginScreen(){
-  loginScreen.classList.remove("hidden");
-  loginScreen.style.display = "flex";
-  loadingOverlay.classList.add("hidden");
-}
-function hideLoginScreen(){
-  loginScreen.classList.add("hidden");
-  loginScreen.style.display = "none";  // double safety
-}
-function setLoginMessage(msg, color){
-  loginMessage.textContent = msg;
-  loginMessage.style.color = color || "#8496a8";
-}
+  // Auth state listener
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log("Auth event:", event, "Session?", !!session);
 
-sendMagicLinkBtn.addEventListener("click", async () => {
-  const email = emailInput.value.trim();
-  if(!email || !email.includes("@")){
-    setLoginMessage("❌ Sahi email daalo", "#ef4444");
-    return;
-  }
-  setLoginMessage("📤 Bhej rahe hai...", "#f59e0b");
-  sendMagicLinkBtn.disabled = true;
+    if((event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") && session && session.user){
+      currentUser = session.user;
+      el.userEmailSpan.textContent = currentUser.email || "";
+      hideAuthScreen();
+      el.loadingOverlay.classList.remove("hidden");
+      if(!isDataLoaded){
+        await loadFromCloud();
+      }
+      el.loadingOverlay.classList.add("hidden");
+    }
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email: email,
-    options: {
-      emailRedirectTo: window.location.origin + window.location.pathname
+    if(event === "SIGNED_OUT"){
+      currentUser = null;
+      isDataLoaded = false;
+      state = { maintenance: 2500, mode: "deficit", adjustment: 500, logs: {} };
+      el.emailInput.value = "";
+      el.passwordInput.value = "";
+      showAuthScreen();
     }
   });
 
-  sendMagicLinkBtn.disabled = false;
-
-  if(error){
-    console.error("Magic link error:", error);
-    setLoginMessage("❌ " + error.message, "#ef4444");
-    return;
-  }
-  setLoginMessage("✅ Email bhej diya! Inbox check karo (spam bhi dekhna)", "#22c55e");
-});
-
-/* ---------------- Main Init ---------------- */
-(async function init(){
-  try {
-    console.log("🚀 Init starting...");
-    console.log("URL hash:", window.location.hash);
-
-    // Auth state change listener pehle lagao
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("📢 Auth event:", event, "Session?", !!session);
-      
-      if(event === "SIGNED_IN" && session && session.user){
-        currentUser = session.user;
-        console.log("✅ Signed in:", currentUser.id, currentUser.email || "(no email)");
-        hideLoginScreen();
-        loadingOverlay.classList.remove("hidden");
-        await loadFromCloud();
-        loadingOverlay.classList.add("hidden");
-        // URL se token clear karo
-        if(window.location.hash){
-          history.replaceState(null, "", window.location.pathname);
-        }
-      }
-      if(event === "SIGNED_OUT"){
-        currentUser = null;
-        showLoginScreen();
-      }
-    });
-
-    // Thoda wait karo taki magic link ka token process ho jaye
-    await new Promise(r => setTimeout(r, 500));
-
-    // Ab session check karo
-    const { data: { session }, error: sessErr } = await supabase.auth.getSession();
-    
-    if(sessErr){
-      console.error("Session error:", sessErr);
-    }
-    
-    console.log("📦 Session found?", !!session);
-
-    if(session && session.user){
-      // User logged in hai
-      currentUser = session.user;
-      console.log("✅ Already logged in:", currentUser.id, currentUser.email || "(no email)");
-      hideLoginScreen();
-      loadingOverlay.classList.remove("hidden");
-      await loadFromCloud();
-      loadingOverlay.classList.add("hidden");
-      // URL clean karo
-      if(window.location.hash){
-        history.replaceState(null, "", window.location.pathname);
-      }
-    } else {
-      // Koi session nahi — login screen dikhao
-      console.log("👤 No session — showing login screen");
-      showLoginScreen();
-    }
-
-  } catch(err){
-    console.error("❌ Init error:", err);
-    setStatus("❌ Error: " + err.message, "offline");
-    loadingOverlay.classList.add("hidden");
-    showLoginScreen();
-  }
-})();
-
-
-/* ---------------- Main Init ---------------- */
-(async function init(){
-  try {
-    // 1. URL me session check karo (magic link se wapas aaye ho?)
-    const { data: sessionData } = await supabase.auth.getSession();
-    let session = sessionData?.session;
-
-    // 2. Agar URL me token hai toh handle karo (magic link click)
-    if(!session){
-      const hash = window.location.hash;
-      if(hash && hash.includes("access_token")){
-        // Supabase SDK automatically parse karega
-        await new Promise(r => setTimeout(r, 800));
-        const { data: retry } = await supabase.auth.getSession();
-        session = retry?.session;
-      }
-    }
-
-    // 3. Session mila? 
-    if(session && session.user){
-      currentUser = session.user;
-      console.log("✅ Logged in:", currentUser.id, currentUser.email || "(anonymous)");
-      hideLoginScreen();
-
-      // URL se token clear karo (security)
-      if(window.location.hash){
-        history.replaceState(null, "", window.location.pathname);
-      }
-
-      await loadFromCloud();
-      return;
-    }
-
-    // 4. Session nahi mila — kya pehle se anonymous user hai?
-    const { data: anonData } = await supabase.auth.getSession();
-    if(anonData?.session?.user){
-      currentUser = anonData.session.user;
-      console.log("✅ Existing anonymous session:", currentUser.id);
-      hideLoginScreen();
-      await loadFromCloud();
-      return;
-    }
-
-    // 5. Kuch bhi nahi — login screen dikhao
-    console.log("👤 No session — showing login screen");
-    showLoginScreen();
-
-    // 6. Auth state change sunte raho (magic link click hone pe)
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth event:", event);
-      if(session && session.user){
-        currentUser = session.user;
-        hideLoginScreen();
-        await loadFromCloud();
-        if(window.location.hash){
-          history.replaceState(null, "", window.location.pathname);
-        }
-      }
-    });
-
-  } catch(err){
-    console.error(err);
-    setStatus("❌ Error: " + err.message, "offline");
+  // Initial session check
+  const { data: { session } } = await supabase.auth.getSession();
+  if(session && session.user){
+    currentUser = session.user;
+    el.userEmailSpan.textContent = currentUser.email || "";
+    hideAuthScreen();
+    el.loadingOverlay.classList.remove("hidden");
+    await loadFromCloud();
     el.loadingOverlay.classList.add("hidden");
+  } else {
+    showAuthScreen();
   }
 })();
 </script>
