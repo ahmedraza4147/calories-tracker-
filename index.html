@@ -334,12 +334,27 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
+// Custom storage jo pakka localStorage use kare
+const customStorage = {
+  getItem: (key) => {
+    try { return window.localStorage.getItem(key); } catch(e) { return null; }
+  },
+  setItem: (key, value) => {
+    try { window.localStorage.setItem(key, value); } catch(e) {}
+  },
+  removeItem: (key) => {
+    try { window.localStorage.removeItem(key); } catch(e) {}
+  }
+};
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
-    storage: window.localStorage,
+    storage: customStorage,
+    storageKey: 'calorie-tracker-auth',
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false
+    detectSessionInUrl: false,
+    flowType: 'implicit'
   }
 });
 
@@ -793,8 +808,34 @@ el.mode.addEventListener("change", () => {
 /* ---------------- Init ---------------- */
 (async function init(){
   try {
-    // Anonymous sign-in
-    const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+    // Pehle check karo — kya purana session already saved hai?
+    let session = null;
+    const { data: sessionData } = await supabase.auth.getSession();
+    session = sessionData?.session;
+
+    if(session && session.user){
+      // Purana session mil gaya — wahi use karo
+      currentUser = session.user;
+      console.log("✅ Existing session restored:", currentUser.id);
+    } else {
+      // Naya anonymous sign-in karo
+      const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+      if(authError){
+        console.error("Auth error:", authError);
+        setStatus("❌ Auth failed: " + authError.message, "offline");
+        el.loadingOverlay.classList.add("hidden");
+        return;
+      }
+      currentUser = authData.user;
+      console.log("🆕 New anonymous user created:", currentUser.id);
+      
+      // Session ko explicitly save karo (extra safety)
+      if(authData.session){
+        try {
+          window.localStorage.setItem('calorie-tracker-auth', JSON.stringify(authData.session));
+        } catch(e) { console.warn("localStorage save failed:", e); }
+      }
+    }
     if(authError){
       console.error("Auth error:", authError);
       setStatus("❌ Auth failed: " + authError.message, "offline");
