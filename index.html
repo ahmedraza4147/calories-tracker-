@@ -219,7 +219,53 @@
 </style>
 </head>
 <body>
+<!-- Login Screen -->
+<div id="loginScreen" style="
+  position:fixed; inset:0; background:#0a0e13; z-index:1000;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+">
+  <div style="
+    background:linear-gradient(180deg,#111823,#0d131b);
+    border:1px solid #1e2a38; border-radius:16px; padding:32px 28px;
+    max-width:400px; width:100%; box-shadow:0 20px 60px -20px #000;
+  ">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+      <div style="
+        width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+        background:linear-gradient(145deg,#22c55e,#0ea5e9);font-size:22px;
+      ">🔥</div>
+      <div>
+        <h1 style="font-size:1.2rem;margin:0;color:#e8eef6;">Calorie Tracker</h1>
+        <p style="margin:2px 0 0;font-size:.75rem;color:#8496a8;">Login to sync your data</p>
+      </div>
+    </div>
 
+    <p style="color:#8496a8;font-size:.82rem;margin:18px 0 12px;line-height:1.5;">
+      Apna email daalo — hum tumhe ek <b style="color:#e8eef6;">magic link</b> bhejenge. Us link pe click karke same data sab devices pe access kar sakte ho.
+    </p>
+
+    <input type="email" id="emailInput" placeholder="tumhara@email.com" style="
+      width:100%; background:#0a1017; border:1px solid #1e2a38; color:#e8eef6;
+      border-radius:10px; padding:12px 14px; font-size:.92rem; font-family:inherit;
+      outline:none; margin-bottom:10px; box-sizing:border-box;
+    " />
+
+    <button type="button" id="sendMagicLinkBtn" style="
+      width:100%; background:linear-gradient(145deg,#22c55e,#16a34a);
+      border:none; color:#04140a; font-weight:700; font-size:.9rem;
+      border-radius:10px; padding:12px; cursor:pointer; font-family:inherit;
+    ">📧 Send Magic Link</button>
+
+    <div id="loginMessage" style="
+      margin-top:14px; font-size:.8rem; color:#8496a8; text-align:center;
+      min-height:20px; line-height:1.5;
+    "></div>
+
+    <p style="color:#4d5d6e; font-size:.7rem; margin:18px 0 0; text-align:center;">
+      Ek hi email se sab devices pe login karo — same data rahega.
+    </p>
+  </div>
+</div>
 <!-- Loading Overlay -->
 <div id="loadingOverlay">
   <div class="spinner"></div>
@@ -806,40 +852,110 @@ el.mode.addEventListener("change", () => {
 });
 
 /* ---------------- Init ---------------- */
+/* ---------------- Login Screen Logic ---------------- */
+const loginScreen = document.getElementById("loginScreen");
+const loadingOverlay = document.getElementById("loadingOverlay");
+const emailInput = document.getElementById("emailInput");
+const sendMagicLinkBtn = document.getElementById("sendMagicLinkBtn");
+const loginMessage = document.getElementById("loginMessage");
+
+function showLoginScreen(){
+  loginScreen.style.display = "flex";
+  loadingOverlay.classList.add("hidden");
+}
+function hideLoginScreen(){
+  loginScreen.style.display = "none";
+}
+function setLoginMessage(msg, color){
+  loginMessage.textContent = msg;
+  loginMessage.style.color = color || "#8496a8";
+}
+
+sendMagicLinkBtn.addEventListener("click", async () => {
+  const email = emailInput.value.trim();
+  if(!email || !email.includes("@")){
+    setLoginMessage("❌ Sahi email daalo", "#ef4444");
+    return;
+  }
+  setLoginMessage("📤 Bhej rahe hai...", "#f59e0b");
+  sendMagicLinkBtn.disabled = true;
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email: email,
+    options: {
+      emailRedirectTo: window.location.origin + window.location.pathname
+    }
+  });
+
+  sendMagicLinkBtn.disabled = false;
+
+  if(error){
+    console.error("Magic link error:", error);
+    setLoginMessage("❌ " + error.message, "#ef4444");
+    return;
+  }
+  setLoginMessage("✅ Email bhej diya! Inbox check karo (spam bhi dekhna)", "#22c55e");
+});
+
+/* ---------------- Main Init ---------------- */
 (async function init(){
   try {
-    // Pehle check karo — kya purana session already saved hai?
-    let session = null;
+    // 1. URL me session check karo (magic link se wapas aaye ho?)
     const { data: sessionData } = await supabase.auth.getSession();
-    session = sessionData?.session;
+    let session = sessionData?.session;
 
-    if(session && session.user){
-      // Purana session mil gaya — wahi use karo
-      currentUser = session.user;
-      console.log("✅ Existing session restored:", currentUser.id);
-    } else {
-      // Naya anonymous sign-in karo
-      const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
-      if(authError){
-        console.error("Auth error:", authError);
-        setStatus("❌ Auth failed: " + authError.message, "offline");
-        el.loadingOverlay.classList.add("hidden");
-        return;
-      }
-      currentUser = authData.user;
-      console.log("🆕 New anonymous user created:", currentUser.id);
-
-      // Session ko explicitly save karo (extra safety)
-      if(authData.session){
-        try {
-          window.localStorage.setItem('calorie-tracker-auth', JSON.stringify(authData.session));
-        } catch(e) { console.warn("localStorage save failed:", e); }
+    // 2. Agar URL me token hai toh handle karo (magic link click)
+    if(!session){
+      const hash = window.location.hash;
+      if(hash && hash.includes("access_token")){
+        // Supabase SDK automatically parse karega
+        await new Promise(r => setTimeout(r, 800));
+        const { data: retry } = await supabase.auth.getSession();
+        session = retry?.session;
       }
     }
 
-    // Ab cloud se data load karo (ye dono cases me chalega)
-    await loadFromCloud();
-    el.loadingOverlay.classList.add("hidden");
+    // 3. Session mila? 
+    if(session && session.user){
+      currentUser = session.user;
+      console.log("✅ Logged in:", currentUser.id, currentUser.email || "(anonymous)");
+      hideLoginScreen();
+
+      // URL se token clear karo (security)
+      if(window.location.hash){
+        history.replaceState(null, "", window.location.pathname);
+      }
+
+      await loadFromCloud();
+      return;
+    }
+
+    // 4. Session nahi mila — kya pehle se anonymous user hai?
+    const { data: anonData } = await supabase.auth.getSession();
+    if(anonData?.session?.user){
+      currentUser = anonData.session.user;
+      console.log("✅ Existing anonymous session:", currentUser.id);
+      hideLoginScreen();
+      await loadFromCloud();
+      return;
+    }
+
+    // 5. Kuch bhi nahi — login screen dikhao
+    console.log("👤 No session — showing login screen");
+    showLoginScreen();
+
+    // 6. Auth state change sunte raho (magic link click hone pe)
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth event:", event);
+      if(session && session.user){
+        currentUser = session.user;
+        hideLoginScreen();
+        await loadFromCloud();
+        if(window.location.hash){
+          history.replaceState(null, "", window.location.pathname);
+        }
+      }
+    });
 
   } catch(err){
     console.error(err);
