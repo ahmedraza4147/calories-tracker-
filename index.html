@@ -38,6 +38,7 @@
     z-index:999; gap:16px;
   }
   #loadingOverlay.hidden{ display:none; }
+  #loginScreen.hidden{ display:none !important; }
   .spinner{
     width:44px; height:44px; border:4px solid #1e2a38; border-top-color:#22c55e;
     border-radius:50%; animation:spin 1s linear infinite;
@@ -860,11 +861,13 @@ const sendMagicLinkBtn = document.getElementById("sendMagicLinkBtn");
 const loginMessage = document.getElementById("loginMessage");
 
 function showLoginScreen(){
+  loginScreen.classList.remove("hidden");
   loginScreen.style.display = "flex";
   loadingOverlay.classList.add("hidden");
 }
 function hideLoginScreen(){
-  loginScreen.style.display = "none";
+  loginScreen.classList.add("hidden");
+  loginScreen.style.display = "none";  // double safety
 }
 function setLoginMessage(msg, color){
   loginMessage.textContent = msg;
