@@ -828,7 +828,7 @@ el.mode.addEventListener("change", () => {
       }
       currentUser = authData.user;
       console.log("🆕 New anonymous user created:", currentUser.id);
-      
+
       // Session ko explicitly save karo (extra safety)
       if(authData.session){
         try {
@@ -836,17 +836,11 @@ el.mode.addEventListener("change", () => {
         } catch(e) { console.warn("localStorage save failed:", e); }
       }
     }
-    if(authError){
-      console.error("Auth error:", authError);
-      setStatus("❌ Auth failed: " + authError.message, "offline");
-      el.loadingOverlay.classList.add("hidden");
-      return;
-    }
-    currentUser = authData.user;
-    console.log("Logged in as anonymous user:", currentUser.id);
 
+    // Ab cloud se data load karo (ye dono cases me chalega)
     await loadFromCloud();
     el.loadingOverlay.classList.add("hidden");
+
   } catch(err){
     console.error(err);
     setStatus("❌ Error: " + err.message, "offline");
