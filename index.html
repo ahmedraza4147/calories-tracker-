@@ -334,7 +334,14 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    storage: window.localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false
+  }
+});
 
 const CIRC = 2 * Math.PI * 80;
 let currentUser = null;
