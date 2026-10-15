@@ -17,6 +17,7 @@
     --danger:#ef4444;
     --warn:#f59e0b;
     --blue:#38bdf8;
+    --purple:#a78bfa;
     --radius:16px;
   }
   *{box-sizing:border-box;}
@@ -45,7 +46,7 @@
   @keyframes spin{ to { transform:rotate(360deg); } }
   .loading-text{ color:var(--muted); font-size:.9rem; }
 
-  /* Login Screen */
+  /* Auth Screen */
   #authScreen{
     position:fixed; inset:0; background:#0a0e13; z-index:1000;
     display:flex; align-items:center; justify-content:center; padding:20px;
@@ -140,6 +141,22 @@
   }
   .today-chip b{color:var(--text);font-weight:600;}
 
+  /* View tabs */
+  .view-tabs{
+    display:flex; gap:6px; background:var(--card); border:1px solid var(--border);
+    padding:5px; border-radius:12px; margin-bottom:18px; max-width:420px;
+  }
+  .view-tab{
+    flex:1; padding:10px 14px; border-radius:9px; border:none;
+    background:transparent; color:var(--muted); font-family:inherit;
+    font-size:.85rem; font-weight:600; cursor:pointer; transition:.15s;
+  }
+  .view-tab.active{ background:linear-gradient(145deg,#22c55e,#16a34a); color:#04140a; }
+  .view-tab:hover:not(.active){ color:var(--text); }
+
+  .view-panel{display:none;}
+  .view-panel.active{display:block;}
+
   .grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr) 350px;}
   @media (max-width:880px){ .grid{grid-template-columns:1fr;} }
 
@@ -160,6 +177,9 @@
     font-family:inherit;outline:none;
   }
   .date-nav input[type="text"]:focus{border-color:#2d4257;}
+  .date-nav .nav-label{
+    flex:1; text-align:center; font-size:.9rem; font-weight:600;
+  }
   .icon-btn{
     width:38px;height:38px;flex:0 0 auto;border-radius:10px;cursor:pointer;
     background:#0a1017;border:1px solid var(--border);color:var(--text);
@@ -201,7 +221,7 @@
   .stat .label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
   .stat .value{font-size:1.15rem;font-weight:700;margin-top:4px;letter-spacing:-.02em;}
   .stat .value small{font-size:.7rem;font-weight:500;color:var(--muted);margin-left:2px;}
-  .v-good{color:var(--accent);} .v-bad{color:var(--danger);} .v-warn{color:var(--warn);} .v-blue{color:var(--blue);}
+  .v-good{color:var(--accent);} .v-bad{color:var(--danger);} .v-warn{color:var(--warn);} .v-blue{color:var(--blue);} .v-purple{color:var(--purple);}
 
   .add-form{display:grid;grid-template-columns:1fr 110px auto;gap:8px;margin-bottom:16px;}
   @media (max-width:520px){ .add-form{grid-template-columns:1fr 90px;} .add-form button{grid-column:1/-1;} }
@@ -221,6 +241,18 @@
   .add-form button:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);}
   .add-form button:active:not(:disabled){transform:translateY(0);}
   .add-form button:disabled{background:#1e2a38;color:#5a6b7d;cursor:not-allowed;opacity:.6;}
+
+  .add-form.activities button{
+    background:linear-gradient(145deg,#38bdf8,#0284c7);
+  }
+
+  .section-title{
+    display:flex; align-items:center; gap:8px;
+    font-size:.82rem; font-weight:600; letter-spacing:.05em;
+    color:var(--muted); text-transform:uppercase; margin: 22px 0 12px;
+    padding-bottom:8px; border-bottom:1px solid var(--border);
+  }
+  .section-title .icon{font-size:1rem;}
 
   .future-banner{
     display:none;background:#2a1f0a;border:1px solid #4d3612;color:var(--warn);
@@ -243,7 +275,9 @@
   }
   .food-item:hover{border-color:var(--border);}
   .food-name{flex:1;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .food-kcal{font-size:.88rem;font-weight:700;color:var(--blue);white-space:nowrap;}
+  .food-kcal{font-size:.88rem;font-weight:700;white-space:nowrap;}
+  .food-kcal.intake{color:var(--blue);}
+  .food-kcal.burn{color:var(--purple);}
   .del-btn{
     width:26px;height:26px;flex:0 0 auto;border-radius:8px;border:none;cursor:pointer;
     background:transparent;color:#4d5d6e;font-size:1.1rem;line-height:1;
@@ -284,6 +318,55 @@
   .hist-fill{height:100%;border-radius:99px;transition:width .5s ease;}
   .hist-note{font-size:.68rem;margin-top:4px;color:var(--muted);}
   .hist-note b{font-weight:700;}
+
+  /* Weekly/Monthly summary */
+  .summary-grid{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:10px;
+    margin-bottom:18px;
+  }
+  @media (max-width:520px){ .summary-grid{grid-template-columns:1fr;} }
+  .sum-row{
+    display:flex; justify-content:space-between; align-items:center;
+    background:#0a1017; border:1px solid var(--border); border-radius:12px;
+    padding:12px 14px;
+  }
+  .sum-row .lbl{font-size:.78rem; color:var(--muted);}
+  .sum-row .val{font-size:1rem; font-weight:700;}
+  .sum-row.big{
+    grid-column:1/-1; background:linear-gradient(145deg,#0f2418,#0a1017);
+    border-color:#1c4029; padding:16px 18px;
+  }
+  .sum-row.big .lbl{font-size:.82rem; color:var(--accent); font-weight:600;}
+  .sum-row.big .val{font-size:1.6rem; letter-spacing:-.02em;}
+  .sum-row.big.surplus{
+    background:linear-gradient(145deg,#2a1113,#0a1017); border-color:#4d1c1f;
+  }
+  .sum-row.big.surplus .lbl{color:var(--danger);}
+  .sum-row.big.weight{
+    background:linear-gradient(145deg,#1a1030,#0a1017); border-color:#3d2a5c;
+  }
+  .sum-row.big.weight .lbl{color:var(--purple);}
+
+  .period-list{list-style:none; margin:0; padding:0;}
+  .period-row{
+    display:grid; grid-template-columns: 100px 1fr auto; gap:12px;
+    align-items:center; padding:12px 14px; border-radius:10px;
+    background:#0a1017; border:1px solid var(--border); margin-bottom:6px;
+    font-size:.85rem;
+  }
+  .period-row.header{
+    background:transparent; border:none; color:var(--muted);
+    font-size:.7rem; text-transform:uppercase; letter-spacing:.06em;
+    padding:6px 14px; font-weight:600;
+  }
+  .period-row .p-date{color:var(--muted); font-size:.78rem;}
+  .period-row .p-detail{display:flex; gap:14px; flex-wrap:wrap; font-size:.78rem;}
+  .period-row .p-detail span{color:var(--muted);}
+  .period-row .p-detail b{color:var(--text);}
+  .period-row .p-total{font-weight:700; text-align:right; min-width:110px;}
+  .period-row .p-total.pos{color:var(--accent);}
+  .period-row .p-total.neg{color:var(--danger);}
+  .period-row .p-total small{font-weight:500; color:var(--muted); font-size:.7rem; display:block;}
 
   footer{text-align:center;font-size:.72rem;color:#3f4d5c;margin-top:26px;}
 </style>
@@ -353,83 +436,193 @@
     <div class="today-chip">Maintenance: <b id="chipMaint">—</b> kcal · Target: <b id="chipTarget">—</b> kcal</div>
   </header>
 
-  <div class="grid">
-    <div>
-      <div class="card">
-        <div class="date-nav">
-          <button class="icon-btn" id="prevDay" title="Previous day">‹</button>
-          <input type="text" id="dateInput" placeholder="DD/MM/YYYY" maxlength="10" inputmode="numeric" />
-          <button class="icon-btn" id="nextDay" title="Next day">›</button>
-          <button class="ghost-btn" id="todayBtn">Today</button>
-        </div>
+  <!-- View Tabs -->
+  <div class="view-tabs">
+    <button class="view-tab active" data-view="daily">Daily</button>
+    <button class="view-tab" data-view="weekly">Weekly</button>
+    <button class="view-tab" data-view="monthly">Monthly</button>
+  </div>
 
-        <div class="future-banner" id="futureBanner">⚠️ Future date selected — you can't log food for a future day.</div>
+  <!-- ================= DAILY VIEW ================= -->
+  <div class="view-panel active" id="viewDaily">
+    <div class="grid">
 
-        <div class="ring-wrap">
-          <svg class="ring" viewBox="0 0 200 200">
-            <circle class="ring-bg" cx="100" cy="100" r="80"></circle>
-            <circle class="ring-fg" id="ringFg" cx="100" cy="100" r="80"></circle>
-          </svg>
-          <div class="ring-center">
-            <div class="ring-big" id="ringConsumed">0</div>
-            <div class="ring-sub">of <span id="ringTarget">0</span> kcal</div>
-            <div class="ring-pill" id="ringPill">0 left</div>
+      <!-- LEFT COLUMN -->
+      <div>
+        <div class="card">
+          <div class="date-nav">
+            <button class="icon-btn" id="prevDay" title="Previous day">‹</button>
+            <input type="text" id="dateInput" placeholder="DD/MM/YYYY" maxlength="10" inputmode="numeric" />
+            <button class="icon-btn" id="nextDay" title="Next day">›</button>
+            <button class="ghost-btn" id="todayBtn">Today</button>
           </div>
+
+          <div class="future-banner" id="futureBanner">⚠️ Future date — yahan entries add nahi kar sakte.</div>
+
+          <div class="ring-wrap">
+            <svg class="ring" viewBox="0 0 200 200">
+              <circle class="ring-bg" cx="100" cy="100" r="80"></circle>
+              <circle class="ring-fg" id="ringFg" cx="100" cy="100" r="80"></circle>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-big" id="ringConsumed">0</div>
+              <div class="ring-sub">of <span id="ringTarget">0</span> kcal</div>
+              <div class="ring-pill" id="ringPill">0 left</div>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat"><div class="label">Eaten</div><div class="value" id="statEaten">0<small>kcal</small></div></div>
+            <div class="stat"><div class="label">Target</div><div class="value" id="statTarget">0<small>kcal</small></div></div>
+            <div class="stat"><div class="label">Remaining</div><div class="value" id="statRemain">0<small>kcal</small></div></div>
+            <div class="stat"><div class="label">Deficit</div><div class="value" id="statDeficit">0<small>kcal</small></div></div>
+          </div>
+
+          <!-- FOOD SECTION -->
+          <div class="section-title"><span class="icon">🍽️</span> Food intake</div>
+          <form class="add-form" id="addForm" autocomplete="off">
+            <input type="text" id="foodName" placeholder="Food / meal (optional)" />
+            <input type="number" id="foodKcal" placeholder="kcal" min="1" step="1" inputmode="numeric" required />
+            <button type="submit" id="addBtn">Add</button>
+          </form>
+          <div class="list-head">
+            <span id="listTitle">Today's entries</span>
+            <span><button class="ghost-btn" id="clearDay" style="padding:4px 10px;font-size:.72rem;">Clear day</button></span>
+          </div>
+          <ul class="food-list" id="foodList"></ul>
+
+          <!-- ACTIVITY SECTION -->
+          <div class="section-title"><span class="icon">🏃</span> Activities / Exercise</div>
+          <form class="add-form activities" id="activityForm" autocomplete="off">
+            <input type="text" id="activityName" placeholder="e.g. Running 30 min" />
+            <input type="number" id="activityKcal" placeholder="kcal" min="1" step="1" inputmode="numeric" required />
+            <button type="submit" id="activityAddBtn">Add Activity</button>
+          </form>
+          <ul class="food-list" id="activityList"></ul>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <h2 style="margin:0;">Maintenance &amp; Target</h2>
+            <button type="button" id="editBtn" class="ghost-btn" style="padding:6px 14px;font-size:.78rem;">✏️ Edit</button>
+          </div>
+          <div class="field">
+            <label for="maintenance">Maintenance calories (TDEE)</label>
+            <input type="number" id="maintenance" min="0" step="10" inputmode="numeric" placeholder="e.g. 2500" disabled />
+          </div>
+          <div class="field">
+            <label for="mode">Goal</label>
+            <select id="mode" disabled>
+              <option value="deficit">Cut — calorie deficit</option>
+              <option value="maintain">Maintain weight</option>
+              <option value="surplus">Bulk — calorie surplus</option>
+            </select>
+          </div>
+          <div class="field" id="adjustField">
+            <label for="adjustment">Daily adjustment (kcal)</label>
+            <input type="number" id="adjustment" min="0" step="50" inputmode="numeric" placeholder="e.g. 500" disabled />
+          </div>
+          <div class="target-box">
+            <div class="tb-label">Daily target</div>
+            <div class="tb-value" id="targetValue">0 <small>kcal</small></div>
+          </div>
+          <p class="hint" id="setupHint"></p>
         </div>
 
-        <div class="stats">
-          <div class="stat"><div class="label">Eaten</div><div class="value" id="statEaten">0<small>kcal</small></div></div>
-          <div class="stat"><div class="label">Target</div><div class="value" id="statTarget">0<small>kcal</small></div></div>
-          <div class="stat"><div class="label">Remaining</div><div class="value" id="statRemain">0<small>kcal</small></div></div>
-          <div class="stat"><div class="label">Deficit</div><div class="value" id="statDeficit">0<small>kcal</small></div></div>
+        <div class="card">
+          <h2>Last 7 days</h2>
+          <div id="history"></div>
         </div>
+      </div>
 
-        <form class="add-form" id="addForm" autocomplete="off">
-          <input type="text" id="foodName" placeholder="Food / meal (optional)" />
-          <input type="number" id="foodKcal" placeholder="kcal" min="1" step="1" inputmode="numeric" required />
-          <button type="submit" id="addBtn">Add</button>
-        </form>
+    </div>
+  </div>
 
-        <div class="list-head">
-          <span id="listTitle">Today's entries</span>
-          <span><button class="ghost-btn" id="clearDay" style="padding:4px 10px;font-size:.72rem;">Clear day</button></span>
+  <!-- ================= WEEKLY VIEW ================= -->
+  <div class="view-panel" id="viewWeekly">
+    <div class="card">
+      <div class="date-nav">
+        <button class="icon-btn" id="prevWeek">‹</button>
+        <div class="nav-label" id="weekLabel">—</div>
+        <button class="icon-btn" id="nextWeek">›</button>
+        <button class="ghost-btn" id="thisWeekBtn">This Week</button>
+      </div>
+
+      <div class="summary-grid">
+        <div class="sum-row">
+          <span class="lbl">Week intake</span>
+          <span class="val v-blue" id="wSumIntake">0</span>
         </div>
-        <ul class="food-list" id="foodList"></ul>
+        <div class="sum-row">
+          <span class="lbl">Week activity burn</span>
+          <span class="val v-purple" id="wSumActivity">0</span>
+        </div>
+        <div class="sum-row big" id="wSumTotalBox">
+          <span class="lbl" id="wSumTotalLbl">Week total deficit</span>
+          <span class="val" id="wSumTotal">+0 kcal</span>
+        </div>
+        <div class="sum-row big weight">
+          <span class="lbl">Estimated fat loss</span>
+          <span class="val v-purple" id="wSumWeight">≈ 0 kg</span>
+        </div>
+      </div>
+
+      <div class="section-title"><span class="icon">📅</span> Daily breakdown</div>
+      <div class="period-row header">
+        <span>Day</span>
+        <span>Intake + Activity</span>
+        <span style="text-align:right">Deficit</span>
+      </div>
+      <ul class="period-list" id="weekList"></ul>
+
+      <div class="hint">
+        <b>Formula:</b> Daily deficit = (Maintenance − Intake) + Activity burn. Weekly total = saare 7 dino ka sum. Surplus (over-eat) hone pe minus ho jata hai.
       </div>
     </div>
+  </div>
 
-    <div>
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <h2 style="margin:0;">Maintenance &amp; Target</h2>
-          <button type="button" id="editBtn" class="ghost-btn" style="padding:6px 14px;font-size:.78rem;">✏️ Edit</button>
-        </div>
-        <div class="field">
-          <label for="maintenance">Maintenance calories (TDEE)</label>
-          <input type="number" id="maintenance" min="0" step="10" inputmode="numeric" placeholder="e.g. 2500" disabled />
-        </div>
-        <div class="field">
-          <label for="mode">Goal</label>
-          <select id="mode" disabled>
-            <option value="deficit">Cut — calorie deficit</option>
-            <option value="maintain">Maintain weight</option>
-            <option value="surplus">Bulk — calorie surplus</option>
-          </select>
-        </div>
-        <div class="field" id="adjustField">
-          <label for="adjustment">Daily adjustment (kcal)</label>
-          <input type="number" id="adjustment" min="0" step="50" inputmode="numeric" placeholder="e.g. 500" disabled />
-        </div>
-        <div class="target-box">
-          <div class="tb-label">Daily target</div>
-          <div class="tb-value" id="targetValue">0 <small>kcal</small></div>
-        </div>
-        <p class="hint" id="setupHint"></p>
+  <!-- ================= MONTHLY VIEW ================= -->
+  <div class="view-panel" id="viewMonthly">
+    <div class="card">
+      <div class="date-nav">
+        <button class="icon-btn" id="prevMonth">‹</button>
+        <div class="nav-label" id="monthLabel">—</div>
+        <button class="icon-btn" id="nextMonth">›</button>
+        <button class="ghost-btn" id="thisMonthBtn">This Month</button>
       </div>
 
-      <div class="card">
-        <h2>Last 7 days</h2>
-        <div id="history"></div>
+      <div class="summary-grid">
+        <div class="sum-row">
+          <span class="lbl">Month intake</span>
+          <span class="val v-blue" id="mSumIntake">0</span>
+        </div>
+        <div class="sum-row">
+          <span class="lbl">Month activity burn</span>
+          <span class="val v-purple" id="mSumActivity">0</span>
+        </div>
+        <div class="sum-row big" id="mSumTotalBox">
+          <span class="lbl" id="mSumTotalLbl">Month total deficit</span>
+          <span class="val" id="mSumTotal">+0 kcal</span>
+        </div>
+        <div class="sum-row big weight">
+          <span class="lbl">Estimated fat loss</span>
+          <span class="val v-purple" id="mSumWeight">≈ 0 kg</span>
+        </div>
+      </div>
+
+      <div class="section-title"><span class="icon">📆</span> Daily breakdown</div>
+      <div class="period-row header">
+        <span>Day</span>
+        <span>Intake + Activity</span>
+        <span style="text-align:right">Deficit</span>
+      </div>
+      <ul class="period-list" id="monthList"></ul>
+
+      <div class="hint">
+        <b>Month view</b> — is calendar month ke saare din (1st se last date tak). Future dates ka data nahi dikhega.
       </div>
     </div>
   </div>
@@ -458,6 +651,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 
 const CIRC = 2 * Math.PI * 80;
+const KCAL_PER_KG = 7700;
+
 let currentUser = null;
 let state = {
   maintenance: 2500,
@@ -466,13 +661,15 @@ let state = {
   logs: {}
 };
 let currentDate = todayISO();
+let currentWeekStart = startOfWeek(todayISO());
+let currentMonthStart = startOfMonth(todayISO());
+let activeView = "daily";
 let isEditing = false;
 let isDataLoaded = false;
-let authMode = "login"; // "login" or "signup"
+let authMode = "login";
 
 const $ = id => document.getElementById(id);
 const el = {
-  // Auth
   authScreen: $("authScreen"),
   tabLogin: $("tabLogin"),
   tabSignup: $("tabSignup"),
@@ -481,7 +678,6 @@ const el = {
   submitAuthBtn: $("submitAuthBtn"),
   authMessage: $("authMessage"),
   forgotBtn: $("forgotBtn"),
-  // App
   appRoot: $("appRoot"),
   userEmailSpan: $("userEmailSpan"),
   logoutBtn: $("logoutBtn"),
@@ -506,9 +702,14 @@ const el = {
   foodName: $("foodName"),
   foodKcal: $("foodKcal"),
   addBtn: $("addBtn"),
+  activityForm: $("activityForm"),
+  activityName: $("activityName"),
+  activityKcal: $("activityKcal"),
+  activityAddBtn: $("activityAddBtn"),
   futureBanner: $("futureBanner"),
   listTitle: $("listTitle"),
   foodList: $("foodList"),
+  activityList: $("activityList"),
   clearDay: $("clearDay"),
   maintenance: $("maintenance"),
   mode: $("mode"),
@@ -516,7 +717,31 @@ const el = {
   adjustField: $("adjustField"),
   targetValue: $("targetValue"),
   setupHint: $("setupHint"),
-  history: $("history")
+  history: $("history"),
+  // Weekly
+  prevWeek: $("prevWeek"),
+  nextWeek: $("nextWeek"),
+  thisWeekBtn: $("thisWeekBtn"),
+  weekLabel: $("weekLabel"),
+  wSumIntake: $("wSumIntake"),
+  wSumActivity: $("wSumActivity"),
+  wSumTotalBox: $("wSumTotalBox"),
+  wSumTotalLbl: $("wSumTotalLbl"),
+  wSumTotal: $("wSumTotal"),
+  wSumWeight: $("wSumWeight"),
+  weekList: $("weekList"),
+  // Monthly
+  prevMonth: $("prevMonth"),
+  nextMonth: $("nextMonth"),
+  thisMonthBtn: $("thisMonthBtn"),
+  monthLabel: $("monthLabel"),
+  mSumIntake: $("mSumIntake"),
+  mSumActivity: $("mSumActivity"),
+  mSumTotalBox: $("mSumTotalBox"),
+  mSumTotalLbl: $("mSumTotalLbl"),
+  mSumTotal: $("mSumTotal"),
+  mSumWeight: $("mSumWeight"),
+  monthList: $("monthList")
 };
 
 /* ---------------- Helpers ---------------- */
@@ -531,11 +756,34 @@ function shiftDate(iso, days){
   const off = d.getTimezoneOffset() * 60000;
   return new Date(d.getTime() - off).toISOString().slice(0,10);
 }
+function startOfWeek(iso){
+  const d = isoToDate(iso);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - off).toISOString().slice(0,10);
+}
+function startOfMonth(iso){
+  const d = isoToDate(iso);
+  d.setDate(1);
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - off).toISOString().slice(0,10);
+}
+function endOfMonth(iso){
+  const d = isoToDate(iso);
+  d.setMonth(d.getMonth() + 1, 0);
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - off).toISOString().slice(0,10);
+}
 function fmtShort(iso){
   return isoToDate(iso).toLocaleDateString(undefined, { weekday:"short", day:"numeric", month:"short" });
 }
 function fmtLong(iso){
   return isoToDate(iso).toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+}
+function fmtMonthYear(iso){
+  return isoToDate(iso).toLocaleDateString(undefined, { month:"long", year:"numeric" });
 }
 function isFuture(iso){ return iso > todayISO(); }
 function isoToDisplay(iso){
@@ -562,8 +810,9 @@ function targetKcal(){
   if(state.mode === "surplus")  return Math.round(m + a);
   return Math.round(m);
 }
-function entriesFor(iso){ return Array.isArray(state.logs[iso]) ? state.logs[iso] : []; }
-function consumedFor(iso){ return entriesFor(iso).reduce((s,e) => s + (Number(e.kcal) || 0), 0); }
+function kgFromDeficit(kcal){ return kcal / KCAL_PER_KG; }
+function fmtKg(kg){ return kg.toFixed(2) + " kg"; }
+
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, m => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -576,6 +825,53 @@ function setStatus(msg, type){
 function setAuthMessage(msg, color){
   el.authMessage.textContent = msg;
   el.authMessage.style.color = color || "#8496a8";
+}
+
+/* ---------------- Log structure helpers ----------------
+   New format: state.logs[iso] = { food: [...], activity: [...] }
+   Old format: state.logs[iso] = [ ... ]  (array of food)
+   We migrate on read.
+------------------------------------------------------- */
+function ensureDay(iso){
+  const day = state.logs[iso];
+  if(!day || Array.isArray(day)){
+    const oldFood = Array.isArray(day) ? day : [];
+    state.logs[iso] = { food: oldFood, activity: [] };
+  }
+  if(!Array.isArray(state.logs[iso].food)) state.logs[iso].food = [];
+  if(!Array.isArray(state.logs[iso].activity)) state.logs[iso].activity = [];
+  return state.logs[iso];
+}
+function entriesFor(iso, type){
+  const day = state.logs[iso];
+  if(!day) return [];
+  if(Array.isArray(day)){
+    return type === "food" ? day : [];
+  }
+  const arr = day[type];
+  return Array.isArray(arr) ? arr : [];
+}
+function intakeFor(iso){ return entriesFor(iso, "food").reduce((s,e)=>s+(Number(e.kcal)||0),0); }
+function activityFor(iso){ return entriesFor(iso, "activity").reduce((s,e)=>s+(Number(e.kcal)||0),0); }
+function dailyDeficit(iso){
+  const intake = intakeFor(iso);
+  const activity = activityFor(iso);
+  const intakeDeficit = (Number(state.maintenance) || 0) - intake;
+  return intakeDeficit + activity;
+}
+function rangeStats(fromISO, toISO){
+  let total = 0, totalIntake = 0, totalActivity = 0;
+  const today = todayISO();
+  let cur = fromISO;
+  while(cur <= toISO){
+    if(cur <= today){
+      totalIntake += intakeFor(cur);
+      totalActivity += activityFor(cur);
+      total += dailyDeficit(cur);
+    }
+    cur = shiftDate(cur, 1);
+  }
+  return { total, totalIntake, totalActivity };
 }
 
 /* ---------------- Auth Screen ---------------- */
@@ -607,7 +903,6 @@ function updateAuthUI(){
 el.tabLogin.addEventListener("click", () => { authMode = "login"; updateAuthUI(); });
 el.tabSignup.addEventListener("click", () => { authMode = "signup"; updateAuthUI(); });
 
-/* ---------------- Submit Auth ---------------- */
 el.submitAuthBtn.addEventListener("click", async () => {
   const email = el.emailInput.value.trim();
   const password = el.passwordInput.value;
@@ -628,7 +923,6 @@ el.submitAuthBtn.addEventListener("click", async () => {
       if(error) throw error;
       if(data.user && data.session){
         setAuthMessage("✅ Account ban gaya! Loading...", "#22c55e");
-        // Auth state change listener will handle the rest
       } else if(data.user && !data.session){
         setAuthMessage("✅ Account ban gaya. Ab Login karo usi email/password se.", "#22c55e");
         authMode = "login";
@@ -638,7 +932,6 @@ el.submitAuthBtn.addEventListener("click", async () => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if(error) throw error;
       setAuthMessage("✅ Login ho gaya! Loading...", "#22c55e");
-      // Auth listener will handle the rest
     }
   } catch(err){
     console.error("Auth error:", err);
@@ -652,7 +945,6 @@ el.submitAuthBtn.addEventListener("click", async () => {
   }
 });
 
-/* ---------------- Forgot Password ---------------- */
 el.forgotBtn.addEventListener("click", async () => {
   const email = el.emailInput.value.trim();
   if(!email || !email.includes("@")){
@@ -669,11 +961,9 @@ el.forgotBtn.addEventListener("click", async () => {
   }
 });
 
-/* ---------------- Logout ---------------- */
 el.logoutBtn.addEventListener("click", async () => {
   if(!confirm("Logout karna hai? Data cloud me safe rahega.")) return;
   await supabase.auth.signOut();
-  // Auth state change will handle
 });
 
 /* ---------------- Cloud Sync ---------------- */
@@ -699,7 +989,6 @@ async function loadFromCloud(){
       logs: data.logs ?? {}
     };
   } else {
-    // Pehli baar — defaults save karo
     isDataLoaded = true;
     await saveToCloud(true);
   }
@@ -767,19 +1056,32 @@ function applyFutureLock(){
   el.foodName.disabled = future;
   el.foodKcal.disabled = future;
   el.addBtn.disabled = future;
+  el.activityName.disabled = future;
+  el.activityKcal.disabled = future;
+  el.activityAddBtn.disabled = future;
   el.futureBanner.classList.toggle("show", future);
   const nextDayISO = shiftDate(currentDate, 1);
   el.nextDay.disabled = isFuture(nextDayISO);
   el.foodName.placeholder = future ? "Can't add for a future date" : "Food / meal (optional)";
   el.foodKcal.placeholder = future ? "—" : "kcal";
+  el.activityName.placeholder = future ? "Can't add for a future date" : "e.g. Running 30 min";
+  el.activityKcal.placeholder = future ? "—" : "kcal";
 }
 
 /* ---------------- Render ---------------- */
 function render(){
+  if(activeView === "daily") renderDaily();
+  if(activeView === "weekly") renderWeekly();
+  if(activeView === "monthly") renderMonthly();
+}
+
+function renderDaily(){
   const target = targetKcal();
   const maintenance = Number(state.maintenance) || 0;
-  const list = entriesFor(currentDate);
-  const consumed = list.reduce((s,e) => s + (Number(e.kcal) || 0), 0);
+  const foodList = entriesFor(currentDate, "food");
+  const actList = entriesFor(currentDate, "activity");
+  const consumed = foodList.reduce((s,e) => s + (Number(e.kcal) || 0), 0);
+  const activity = actList.reduce((s,e) => s + (Number(e.kcal) || 0), 0);
 
   el.chipMaint.textContent = num(maintenance);
   el.chipTarget.textContent = num(target);
@@ -787,7 +1089,7 @@ function render(){
 
   const isToday = currentDate === todayISO();
   el.listTitle.textContent = (isToday ? "Today's entries" : fmtShort(currentDate) + " entries")
-                            + " · " + list.length + " item" + (list.length === 1 ? "" : "s");
+                            + " · " + foodList.length + " item" + (foodList.length === 1 ? "" : "s");
 
   const ratio = target > 0 ? consumed / target : 0;
   const filled = Math.min(ratio, 1);
@@ -822,7 +1124,9 @@ function render(){
     el.statRemain.className = "value v-bad";
   }
 
-  const deficit = maintenance - consumed;
+  // Deficit = (maintenance - intake) + activity
+  const intakeDeficit = maintenance - consumed;
+  const deficit = intakeDeficit + activity;
   if(deficit >= 0){
     el.statDeficit.innerHTML = num(deficit) + "<small>kcal</small>";
     el.statDeficit.className = "value v-good";
@@ -845,22 +1149,39 @@ function render(){
     el.setupHint.textContent = `Maintaining: eat around ${num(target)} kcal per day.`;
   }
 
-  renderList(list);
+  // Lists
+  renderFoodList(foodList);
+  renderActivityList(actList);
   renderHistory();
   applyFutureLock();
 }
 
-function renderList(list){
+function renderFoodList(list){
   if(!list.length){
-    el.foodList.innerHTML = '<li class="empty">No entries yet — add your first meal above 🍽️</li>';
+    el.foodList.innerHTML = '<li class="empty">No food entries yet — add your first meal above 🍽️</li>';
     return;
   }
   const sorted = list.slice().reverse();
   el.foodList.innerHTML = sorted.map(item => `
     <li class="food-item">
       <span class="food-name">${escapeHtml(item.name)}</span>
-      <span class="food-kcal">${num(item.kcal)} kcal</span>
-      <button class="del-btn" data-del="${item.id}" title="Remove" aria-label="Remove">×</button>
+      <span class="food-kcal intake">${num(item.kcal)} kcal</span>
+      <button class="del-btn" data-del="${item.id}" data-type="food" title="Remove" aria-label="Remove">×</button>
+    </li>
+  `).join("");
+}
+
+function renderActivityList(list){
+  if(!list.length){
+    el.activityList.innerHTML = '<li class="empty">No activities yet — add exercise above 🏃</li>';
+    return;
+  }
+  const sorted = list.slice().reverse();
+  el.activityList.innerHTML = sorted.map(item => `
+    <li class="food-item">
+      <span class="food-name">${escapeHtml(item.name)}</span>
+      <span class="food-kcal burn">+${num(item.kcal)} kcal</span>
+      <button class="del-btn" data-del="${item.id}" data-type="activity" title="Remove" aria-label="Remove">×</button>
     </li>
   `).join("");
 }
@@ -873,12 +1194,13 @@ function renderHistory(){
 
   for(let i = 6; i >= 0; i--){
     const iso = shiftDate(today, -i);
-    const c = consumedFor(iso);
+    const c = intakeFor(iso);
+    const a = activityFor(iso);
     const pct = target > 0 ? Math.min((c / target) * 100, 100) : 0;
     const over = target > 0 && c > target;
     const color = c === 0 ? "#2a3644" : (over ? "var(--danger)" : (c/target >= .9 ? "var(--warn)" : "var(--accent)"));
-    const net = maintenance - c;
-    const note = c === 0
+    const net = (maintenance - c) + a;
+    const note = (c === 0 && a === 0)
       ? "No data"
       : (net >= 0 ? `<b style="color:var(--accent)">${num(net)} kcal deficit</b>`
                   : `<b style="color:var(--danger)">${num(Math.abs(net))} kcal surplus</b>`);
@@ -896,15 +1218,141 @@ function renderHistory(){
   el.history.innerHTML = html;
 }
 
-/* ---------------- Events ---------------- */
-el.prevDay.addEventListener("click", () => { currentDate = shiftDate(currentDate, -1); render(); });
+/* ---------------- Render Weekly ---------------- */
+function renderWeekly(){
+  const from = currentWeekStart;
+  const to = shiftDate(from, 6);
+  el.weekLabel.textContent = fmtShort(from) + " — " + fmtShort(to);
+
+  const { total, totalIntake, totalActivity } = rangeStats(from, to);
+
+  el.wSumIntake.textContent = num(totalIntake);
+  el.wSumActivity.textContent = num(totalActivity);
+
+  if(total >= 0){
+    el.wSumTotalBox.classList.remove("surplus");
+    el.wSumTotalLbl.textContent = "Week total deficit";
+    el.wSumTotal.textContent = "+" + num(total) + " kcal";
+    el.wSumTotal.className = "val v-good";
+  }else{
+    el.wSumTotalBox.classList.add("surplus");
+    el.wSumTotalLbl.textContent = "Week total surplus";
+    el.wSumTotal.textContent = num(total) + " kcal";
+    el.wSumTotal.className = "val v-bad";
+  }
+
+  const kg = kgFromDeficit(total);
+  el.wSumWeight.textContent = kg >= 0
+    ? "≈ " + fmtKg(kg) + " fat loss"
+    : "≈ " + fmtKg(Math.abs(kg)) + " fat gain";
+
+  const today = todayISO();
+  let html = "";
+  for(let i = 0; i < 7; i++){
+    const iso = shiftDate(from, i);
+    const intake = intakeFor(iso);
+    const act = activityFor(iso);
+    const def = dailyDeficit(iso);
+    const isFut = isFuture(iso);
+    const isEmpty = intake === 0 && act === 0;
+    const cls = def > 0 ? "pos" : (def < 0 ? "neg" : "");
+    const sign = def > 0 ? "+" : "";
+    const kgDay = kgFromDeficit(def);
+
+    html += `
+      <li class="period-row">
+        <span class="p-date">${fmtShort(iso)}${iso === today ? " •" : ""}</span>
+        <span class="p-detail">
+          <span>Intake: <b style="color:${intake?'var(--blue)':'#4d5d6e'}">${num(intake)}</b></span>
+          <span>Burn: <b style="color:${act?'var(--purple)':'#4d5d6e'}">${num(act)}</b></span>
+        </span>
+        <span class="p-total ${cls}">
+          ${isFut && isEmpty ? "—" : (isEmpty ? "—" : sign + num(def) + " kcal")}
+          <small>${isEmpty || isFut ? "" : (kgDay >= 0 ? "≈ "+kgDay.toFixed(3)+" kg" : "≈ "+Math.abs(kgDay).toFixed(3)+" kg gain")}</small>
+        </span>
+      </li>`;
+  }
+  el.weekList.innerHTML = html;
+}
+
+/* ---------------- Render Monthly ---------------- */
+function renderMonthly(){
+  const from = currentMonthStart;
+  const to = endOfMonth(from);
+  el.monthLabel.textContent = fmtMonthYear(from);
+
+  const { total, totalIntake, totalActivity } = rangeStats(from, to);
+
+  el.mSumIntake.textContent = num(totalIntake);
+  el.mSumActivity.textContent = num(totalActivity);
+
+  if(total >= 0){
+    el.mSumTotalBox.classList.remove("surplus");
+    el.mSumTotalLbl.textContent = "Month total deficit";
+    el.mSumTotal.textContent = "+" + num(total) + " kcal";
+    el.mSumTotal.className = "val v-good";
+  }else{
+    el.mSumTotalBox.classList.add("surplus");
+    el.mSumTotalLbl.textContent = "Month total surplus";
+    el.mSumTotal.textContent = num(total) + " kcal";
+    el.mSumTotal.className = "val v-bad";
+  }
+
+  const kg = kgFromDeficit(total);
+  el.mSumWeight.textContent = kg >= 0
+    ? "≈ " + fmtKg(kg) + " fat loss"
+    : "≈ " + fmtKg(Math.abs(kg)) + " fat gain";
+
+  const today = todayISO();
+  let html = "";
+  let cur = from;
+  while(cur <= to){
+    const iso = cur;
+    const intake = intakeFor(iso);
+    const act = activityFor(iso);
+    const def = dailyDeficit(iso);
+    const isFut = isFuture(iso);
+    const isEmpty = intake === 0 && act === 0;
+    const cls = def > 0 ? "pos" : (def < 0 ? "neg" : "");
+    const sign = def > 0 ? "+" : "";
+
+    html += `
+      <li class="period-row">
+        <span class="p-date">${fmtShort(iso)}${iso === today ? " •" : ""}</span>
+        <span class="p-detail">
+          <span>Intake: <b style="color:${intake?'var(--blue)':'#4d5d6e'}">${num(intake)}</b></span>
+          <span>Burn: <b style="color:${act?'var(--purple)':'#4d5d6e'}">${num(act)}</b></span>
+        </span>
+        <span class="p-total ${cls}">
+          ${isFut && isEmpty ? "—" : (isEmpty ? "—" : sign + num(def) + " kcal")}
+        </span>
+      </li>`;
+    cur = shiftDate(cur, 1);
+  }
+  el.monthList.innerHTML = html;
+}
+
+/* ---------------- View Tabs ---------------- */
+document.querySelectorAll(".view-tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".view-tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeView = btn.dataset.view;
+    document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+    $("view" + activeView.charAt(0).toUpperCase() + activeView.slice(1)).classList.add("active");
+    render();
+  });
+});
+
+/* ---------------- Events: Daily ---------------- */
+el.prevDay.addEventListener("click", () => { currentDate = shiftDate(currentDate, -1); renderDaily(); });
 el.nextDay.addEventListener("click", () => {
   const next = shiftDate(currentDate, 1);
   if(isFuture(next)) return;
   currentDate = next;
-  render();
+  renderDaily();
 });
-el.todayBtn.addEventListener("click", () => { currentDate = todayISO(); render(); });
+el.todayBtn.addEventListener("click", () => { currentDate = todayISO(); renderDaily(); });
 
 el.dateInput.addEventListener("input", e => {
   let v = e.target.value.replace(/\D/g, "");
@@ -930,9 +1378,10 @@ function applyDateInput(){
     el.dateInput.value = isoToDisplay(currentDate); return;
   }
   currentDate = iso;
-  render();
+  renderDaily();
 }
 
+/* ---------------- Events: Add Food ---------------- */
 el.addForm.addEventListener("submit", async e => {
   e.preventDefault();
   if(isFuture(currentDate)){
@@ -942,41 +1391,73 @@ el.addForm.addEventListener("submit", async e => {
   if(!kcal || kcal <= 0){ el.foodKcal.focus(); return; }
 
   const name = el.foodName.value.trim() || "Food";
-  if(!Array.isArray(state.logs[currentDate])) state.logs[currentDate] = [];
-  state.logs[currentDate].push({
+  const day = ensureDay(currentDate);
+  day.food.push({
     id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now() + Math.random()),
     name: name,
     kcal: kcal
   });
   el.foodName.value = "";
   el.foodKcal.value = "";
-  render();
+  renderDaily();
   await saveToCloud();
   el.foodName.focus();
 });
 
-el.foodList.addEventListener("click", async e => {
+/* ---------------- Events: Add Activity ---------------- */
+el.activityForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  if(isFuture(currentDate)){
+    alert("Future date ke liye activity add nahi kar sakte."); return;
+  }
+  const kcal = Math.round(Number(el.activityKcal.value));
+  if(!kcal || kcal <= 0){ el.activityKcal.focus(); return; }
+
+  const name = el.activityName.value.trim() || "Activity";
+  const day = ensureDay(currentDate);
+  day.activity.push({
+    id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now() + Math.random()),
+    name: name,
+    kcal: kcal
+  });
+  el.activityName.value = "";
+  el.activityKcal.value = "";
+  renderDaily();
+  await saveToCloud();
+  el.activityName.focus();
+});
+
+/* ---------------- Events: Delete entry ---------------- */
+document.addEventListener("click", async e => {
   const btn = e.target.closest("[data-del]");
   if(!btn) return;
   const id = btn.getAttribute("data-del");
-  state.logs[currentDate] = entriesFor(currentDate).filter(x => x.id !== id);
-  if(!state.logs[currentDate].length) delete state.logs[currentDate];
-  render();
+  const type = btn.getAttribute("data-type");
+  if(!state.logs[currentDate]) return;
+  const day = ensureDay(currentDate);
+  if(Array.isArray(day[type])){
+    day[type] = day[type].filter(x => x.id !== id);
+  }
+  renderDaily();
   await saveToCloud();
 });
 
+/* ---------------- Events: Clear day ---------------- */
 el.clearDay.addEventListener("click", async () => {
   if(isFuture(currentDate)){
     alert("Future date clear nahi kar sakte."); return;
   }
-  if(!entriesFor(currentDate).length) return;
-  if(confirm("Remove all entries for " + fmtLong(currentDate) + "?")){
+  const foodCount = entriesFor(currentDate, "food").length;
+  const actCount = entriesFor(currentDate, "activity").length;
+  if(foodCount === 0 && actCount === 0) return;
+  if(confirm("Remove all entries (food + activity) for " + fmtLong(currentDate) + "?")){
     delete state.logs[currentDate];
-    render();
+    renderDaily();
     await saveToCloud();
   }
 });
 
+/* ---------------- Events: Edit/Save settings ---------------- */
 el.editBtn.addEventListener("click", async () => {
   if(!isEditing){
     setEditing(true);
@@ -1001,11 +1482,48 @@ el.mode.addEventListener("change", () => {
   }
 });
 
+/* ---------------- Events: Weekly Nav ---------------- */
+el.prevWeek.addEventListener("click", () => {
+  currentWeekStart = shiftDate(currentWeekStart, -7);
+  renderWeekly();
+});
+el.nextWeek.addEventListener("click", () => {
+  const next = shiftDate(currentWeekStart, 7);
+  if(next > todayISO()) return;
+  currentWeekStart = next;
+  renderWeekly();
+});
+el.thisWeekBtn.addEventListener("click", () => {
+  currentWeekStart = startOfWeek(todayISO());
+  renderWeekly();
+});
+
+/* ---------------- Events: Monthly Nav ---------------- */
+el.prevMonth.addEventListener("click", () => {
+  const d = isoToDate(currentMonthStart);
+  d.setMonth(d.getMonth() - 1);
+  const off = d.getTimezoneOffset() * 60000;
+  currentMonthStart = startOfMonth(new Date(d.getTime() - off).toISOString().slice(0,10));
+  renderMonthly();
+});
+el.nextMonth.addEventListener("click", () => {
+  const d = isoToDate(currentMonthStart);
+  d.setMonth(d.getMonth() + 1);
+  const off = d.getTimezoneOffset() * 60000;
+  const next = startOfMonth(new Date(d.getTime() - off).toISOString().slice(0,10));
+  if(next > todayISO()) return;
+  currentMonthStart = next;
+  renderMonthly();
+});
+el.thisMonthBtn.addEventListener("click", () => {
+  currentMonthStart = startOfMonth(todayISO());
+  renderMonthly();
+});
+
 /* ---------------- Init ---------------- */
 (async function init(){
   updateAuthUI();
 
-  // Auth state listener
   supabase.auth.onAuthStateChange(async (event, session) => {
     console.log("Auth event:", event, "Session?", !!session);
 
@@ -1030,7 +1548,6 @@ el.mode.addEventListener("change", () => {
     }
   });
 
-  // Initial session check
   const { data: { session } } = await supabase.auth.getSession();
   if(session && session.user){
     currentUser = session.user;
