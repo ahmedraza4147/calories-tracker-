@@ -853,10 +853,15 @@ function entriesFor(iso, type){
 }
 function intakeFor(iso){ return entriesFor(iso, "food").reduce((s,e)=>s+(Number(e.kcal)||0),0); }
 function activityFor(iso){ return entriesFor(iso, "activity").reduce((s,e)=>s+(Number(e.kcal)||0),0); }
-function dailyDeficit(iso){
-  const intake = intakeFor(iso);
-  const activity = activityFor(iso);
-  const intakeDeficit = (Number(state.maintenance) || 0) - intake;
+function dailyDeficit(iso)function dailyDeficit(iso){
+  const foodEntries = entriesFor(iso, "food");
+  const actEntries = entriesFor(iso, "activity");
+  const hasFood = foodEntries.length > 0;
+  const hasActivity = actEntries.length > 0;
+  if(!hasFood && !hasActivity) return 0;
+  const intake = foodEntries.reduce((s,e)=>s+(Number(e.kcal)||0),0);
+  const activity = actEntries.reduce((s,e)=>s+(Number(e.kcal)||0),0);
+  const intakeDeficit = hasFood ? ((Number(state.maintenance) || 0) - intake) : 0;
   return intakeDeficit + activity;
 }
 function rangeStats(fromISO, toISO){
