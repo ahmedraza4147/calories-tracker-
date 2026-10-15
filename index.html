@@ -853,7 +853,7 @@ function entriesFor(iso, type){
 }
 function intakeFor(iso){ return entriesFor(iso, "food").reduce((s,e)=>s+(Number(e.kcal)||0),0); }
 function activityFor(iso){ return entriesFor(iso, "activity").reduce((s,e)=>s+(Number(e.kcal)||0),0); }
-function dailyDeficit(iso)function dailyDeficit(iso){
+function dailyDeficit(iso){
   const foodEntries = entriesFor(iso, "food");
   const actEntries = entriesFor(iso, "activity");
   const hasFood = foodEntries.length > 0;
